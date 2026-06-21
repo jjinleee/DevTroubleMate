@@ -1,5 +1,6 @@
 package com.jinlee.devtroublemate.ai.domain;
 
+import com.jinlee.devtroublemate.global.domain.BaseEntity;
 import com.jinlee.devtroublemate.trouble.domain.Trouble;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -9,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class AIAnalysis {
+public class AIAnalysis extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
