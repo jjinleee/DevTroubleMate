@@ -1,5 +1,10 @@
 package com.jinlee.devtroublemate.trouble.service;
 
+import com.jinlee.devtroublemate.tag.domain.Tag;
+import com.jinlee.devtroublemate.tag.domain.TroubleTag;
+import com.jinlee.devtroublemate.tag.repository.TagRepository;
+import com.jinlee.devtroublemate.tag.repository.TroubleTagRepository;
+
 import com.jinlee.devtroublemate.trouble.domain.Trouble;
 import com.jinlee.devtroublemate.trouble.dto.*;
 import com.jinlee.devtroublemate.trouble.repository.TroubleRepository;
@@ -15,6 +20,8 @@ import java.util.List;
 public class TroubleService {
 
     private final TroubleRepository troubleRepository;
+    private final TagRepository tagRepository;
+    private final TroubleTagRepository troubleTagRepository;
 
     public CreateTroubleResponse create(CreateTroubleRequest request) {
 
@@ -25,6 +32,24 @@ public class TroubleService {
                 .build();
 
         Trouble saved = troubleRepository.save(trouble);
+
+        if (request.tags() != null) {
+            request.tags().forEach(tagName -> {
+                Tag tag = tagRepository.findByName(tagName)
+                        .orElseGet(() -> tagRepository.save(
+                                Tag.builder()
+                                        .name(tagName)
+                                        .build()
+                        ));
+
+                TroubleTag troubleTag = TroubleTag.builder()
+                        .trouble(saved)
+                        .tag(tag)
+                        .build();
+
+                troubleTagRepository.save(troubleTag);
+            });
+        }
 
         return new CreateTroubleResponse(saved.getId());
     }
