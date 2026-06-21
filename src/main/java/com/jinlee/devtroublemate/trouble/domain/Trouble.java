@@ -35,12 +35,22 @@ public class Trouble extends BaseEntity{
     private String referenceLink;
 
     @Builder
-
     public Trouble(String title, String description, String rawLog) {
         this.title = title;
         this.description = description;
         this.rawLog = rawLog;
         this.status = TroubleStatus.OPEN;
+    }
+
+    public void resolve(
+            String actualCause,
+            String solution,
+            String referenceLink
+    ) {
+        this.actualCause = actualCause;
+        this.solution = solution;
+        this.referenceLink = referenceLink;
+        this.status = TroubleStatus.RESOLVED;
     }
 
 }

@@ -1,10 +1,7 @@
 package com.jinlee.devtroublemate.trouble.service;
 
 import com.jinlee.devtroublemate.trouble.domain.Trouble;
-import com.jinlee.devtroublemate.trouble.dto.CreateTroubleRequest;
-import com.jinlee.devtroublemate.trouble.dto.CreateTroubleResponse;
-import com.jinlee.devtroublemate.trouble.dto.TroubleDetailResponse;
-import com.jinlee.devtroublemate.trouble.dto.TroubleSummaryResponse;
+import com.jinlee.devtroublemate.trouble.dto.*;
 import com.jinlee.devtroublemate.trouble.repository.TroubleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -46,5 +43,22 @@ public class TroubleService {
                 .stream()
                 .map(TroubleSummaryResponse::from)
                 .toList();
+    }
+
+    public void resolve(
+            Long troubleId,
+            ResolveTroubleRequest request
+    ) {
+
+        Trouble trouble = troubleRepository.findById(troubleId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("장애를 찾을 수 없습니다.")
+                );
+
+        trouble.resolve(
+                request.actualCause(),
+                request.solution(),
+                request.referenceLink()
+        );
     }
 }
