@@ -2,6 +2,7 @@ package com.jinlee.devtroublemate.trouble.domain;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import com.jinlee.devtroublemate.global.domain.BaseEntity;
@@ -32,5 +33,14 @@ public class Trouble extends BaseEntity{
     @Column(columnDefinition = "TEXT")
     private String solution;
     private String referenceLink;
+
+    @Builder
+
+    public Trouble(String title, String description, String rawLog) {
+        this.title = title;
+        this.description = description;
+        this.rawLog = rawLog;
+        this.status = TroubleStatus.OPEN;
+    }
 
 }
