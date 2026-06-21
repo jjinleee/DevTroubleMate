@@ -1,6 +1,6 @@
 package com.jinlee.devtroublemate.trouble.dto;
 
-import com.jinlee.devtroublemate.trouble.domain.Trouble;
+import java.util.List;
 
 public record TroubleDetailResponse(
         Long id,
@@ -10,18 +10,7 @@ public record TroubleDetailResponse(
         String status,
         String actualCause,
         String solution,
-        String referenceLink
+        String referenceLink,
+        List<String> tags
 ) {
-    public static TroubleDetailResponse from(Trouble trouble) {
-        return new TroubleDetailResponse(
-                trouble.getId(),
-                trouble.getTitle(),
-                trouble.getDescription(),
-                trouble.getRawLog(),
-                trouble.getStatus().name(),
-                trouble.getActualCause(),
-                trouble.getSolution(),
-                trouble.getReferenceLink()
-        );
-    }
 }

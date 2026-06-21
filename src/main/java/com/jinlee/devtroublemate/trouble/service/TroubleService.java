@@ -56,17 +56,50 @@ public class TroubleService {
 
     @Transactional(readOnly = true)
     public TroubleDetailResponse getDetail(Long troubleId) {
-        Trouble trouble = troubleRepository.findById(troubleId)
-                .orElseThrow(() -> new IllegalArgumentException("장애를 찾을 수 없습니다."));
 
-        return TroubleDetailResponse.from(trouble);
+        Trouble trouble = troubleRepository.findById(troubleId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("장애를 찾을 수 없습니다.")
+                );
+
+        List<String> tags = troubleTagRepository.findAllByTrouble(trouble)
+                .stream()
+                .map(troubleTag -> troubleTag.getTag().getName())
+                .toList();
+
+        return new TroubleDetailResponse(
+                trouble.getId(),
+                trouble.getTitle(),
+                trouble.getDescription(),
+                trouble.getRawLog(),
+                trouble.getStatus().name(),
+                trouble.getActualCause(),
+                trouble.getSolution(),
+                trouble.getReferenceLink(),
+                tags
+        );
     }
 
     @Transactional(readOnly = true)
     public List<TroubleSummaryResponse> getTroubles() {
+
         return troubleRepository.findAll()
                 .stream()
-                .map(TroubleSummaryResponse::from)
+                .map(trouble -> {
+
+                    List<String> tags = troubleTagRepository.findAllByTrouble(trouble)
+                            .stream()
+                            .map(troubleTag -> troubleTag.getTag().getName())
+                            .toList();
+
+                    return new TroubleSummaryResponse(
+                            trouble.getId(),
+                            trouble.getTitle(),
+                            trouble.getStatus().name(),
+                            trouble.getCreatedAt(),
+                            tags
+                    );
+                })
                 .toList();
     }
 

@@ -3,19 +3,13 @@ package com.jinlee.devtroublemate.trouble.dto;
 import com.jinlee.devtroublemate.trouble.domain.Trouble;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record TroubleSummaryResponse(
         Long id,
         String title,
         String status,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        List<String> tags
 ) {
-    public static TroubleSummaryResponse from(Trouble trouble) {
-        return new TroubleSummaryResponse(
-                trouble.getId(),
-                trouble.getTitle(),
-                trouble.getStatus().name(),
-                trouble.getCreatedAt()
-        );
-    }
 }
