@@ -3,9 +3,12 @@ package com.jinlee.devtroublemate.trouble.controller;
 import com.jinlee.devtroublemate.trouble.dto.CreateTroubleRequest;
 import com.jinlee.devtroublemate.trouble.dto.CreateTroubleResponse;
 import com.jinlee.devtroublemate.trouble.dto.TroubleDetailResponse;
+import com.jinlee.devtroublemate.trouble.dto.TroubleSummaryResponse;
 import com.jinlee.devtroublemate.trouble.service.TroubleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,5 +29,10 @@ public class TroubleController {
             @PathVariable Long troubleId
     ) {
         return troubleService.getDetail(troubleId);
+    }
+
+    @GetMapping
+    public List<TroubleSummaryResponse> getTroubles() {
+        return troubleService.getTroubles();
     }
 }

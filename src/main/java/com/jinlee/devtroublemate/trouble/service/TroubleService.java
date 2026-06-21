@@ -4,10 +4,13 @@ import com.jinlee.devtroublemate.trouble.domain.Trouble;
 import com.jinlee.devtroublemate.trouble.dto.CreateTroubleRequest;
 import com.jinlee.devtroublemate.trouble.dto.CreateTroubleResponse;
 import com.jinlee.devtroublemate.trouble.dto.TroubleDetailResponse;
+import com.jinlee.devtroublemate.trouble.dto.TroubleSummaryResponse;
 import com.jinlee.devtroublemate.trouble.repository.TroubleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -35,5 +38,13 @@ public class TroubleService {
                 .orElseThrow(() -> new IllegalArgumentException("장애를 찾을 수 없습니다."));
 
         return TroubleDetailResponse.from(trouble);
+    }
+
+    @Transactional(readOnly = true)
+    public List<TroubleSummaryResponse> getTroubles() {
+        return troubleRepository.findAll()
+                .stream()
+                .map(TroubleSummaryResponse::from)
+                .toList();
     }
 }
