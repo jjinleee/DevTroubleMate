@@ -29,8 +29,10 @@ public class TroubleController {
     }
 
     @GetMapping
-    public List<TroubleSummaryResponse> getTroubles() {
-        return troubleService.getTroubles();
+    public List<TroubleSummaryResponse> getTroubles(
+            @ModelAttribute TroubleSearchCondition condition
+    ) {
+        return troubleService.getTroubles(condition);
     }
 
     @PatchMapping("/{troubleId}/resolution")

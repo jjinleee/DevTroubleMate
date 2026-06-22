@@ -4,6 +4,7 @@ import com.jinlee.devtroublemate.tag.domain.Tag;
 import com.jinlee.devtroublemate.tag.domain.TroubleTag;
 import com.jinlee.devtroublemate.tag.repository.TagRepository;
 import com.jinlee.devtroublemate.tag.repository.TroubleTagRepository;
+import com.jinlee.devtroublemate.trouble.dto.TroubleSearchCondition;
 
 import com.jinlee.devtroublemate.trouble.domain.Trouble;
 import com.jinlee.devtroublemate.trouble.dto.*;
@@ -81,9 +82,9 @@ public class TroubleService {
     }
 
     @Transactional(readOnly = true)
-    public List<TroubleSummaryResponse> getTroubles() {
+    public List<TroubleSummaryResponse> getTroubles(TroubleSearchCondition condition) {
 
-        return troubleRepository.findAll()
+        return troubleRepository.search(condition)
                 .stream()
                 .map(trouble -> {
 
