@@ -1,16 +1,36 @@
 package com.jinlee.devtroublemate.trouble.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.util.List;
 
+@Schema(description = "트러블 상세 조회 응답")
 public record TroubleDetailResponse(
+        @Schema(description = "트러블 ID", example = "1")
         Long id,
+
+        @Schema(description = "제목", example = "JWT 토큰 만료 오류")
         String title,
+
+        @Schema(description = "상세 설명")
         String description,
+
+        @Schema(description = "원본 로그")
         String rawLog,
+
+        @Schema(description = "상태", example = "OPEN")
         String status,
+
+        @Schema(description = "실제 원인")
         String actualCause,
+
+        @Schema(description = "해결 방법")
         String solution,
+
+        @Schema(description = "참고 링크")
         String referenceLink,
+
+        @Schema(description = "태그 목록", example = "[\"JWT\", \"Docker\"]")
         List<String> tags
 ) {
 }

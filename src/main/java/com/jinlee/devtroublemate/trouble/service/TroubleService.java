@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -63,7 +65,8 @@ public class TroubleService {
                         new IllegalArgumentException("장애를 찾을 수 없습니다.")
                 );
 
-        List<String> tags = troubleTagRepository.findAllByTrouble(trouble)
+        List<String> tags = troubleTagRepository
+                .findAllWithTagByTroubleIdIn(List.of(troubleId))
                 .stream()
                 .map(troubleTag -> troubleTag.getTag().getName())
                 .toList();
@@ -84,23 +87,32 @@ public class TroubleService {
     @Transactional(readOnly = true)
     public List<TroubleSummaryResponse> getTroubles(TroubleSearchCondition condition) {
 
-        return troubleRepository.search(condition)
+        List<Trouble> troubles = troubleRepository.search(condition);
+
+        if (troubles.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> troubleIds = troubles.stream()
+                .map(Trouble::getId)
+                .toList();
+
+        Map<Long, List<String>> tagsByTroubleId = troubleTagRepository
+                .findAllWithTagByTroubleIdIn(troubleIds)
                 .stream()
-                .map(trouble -> {
+                .collect(Collectors.groupingBy(
+                        troubleTag -> troubleTag.getTrouble().getId(),
+                        Collectors.mapping(troubleTag -> troubleTag.getTag().getName(), Collectors.toList())
+                ));
 
-                    List<String> tags = troubleTagRepository.findAllByTrouble(trouble)
-                            .stream()
-                            .map(troubleTag -> troubleTag.getTag().getName())
-                            .toList();
-
-                    return new TroubleSummaryResponse(
-                            trouble.getId(),
-                            trouble.getTitle(),
-                            trouble.getStatus().name(),
-                            trouble.getCreatedAt(),
-                            tags
-                    );
-                })
+        return troubles.stream()
+                .map(trouble -> new TroubleSummaryResponse(
+                        trouble.getId(),
+                        trouble.getTitle(),
+                        trouble.getStatus().name(),
+                        trouble.getCreatedAt(),
+                        tagsByTroubleId.getOrDefault(trouble.getId(), List.of())
+                ))
                 .toList();
     }
 
