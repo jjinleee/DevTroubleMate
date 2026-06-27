@@ -1,5 +1,6 @@
 package com.jinlee.devtroublemate.trouble.service;
 
+import com.jinlee.devtroublemate.ai.service.AIAnalysisService;
 import com.jinlee.devtroublemate.tag.domain.Tag;
 import com.jinlee.devtroublemate.tag.domain.TroubleTag;
 import com.jinlee.devtroublemate.tag.repository.TagRepository;
@@ -25,6 +26,7 @@ public class TroubleService {
     private final TroubleRepository troubleRepository;
     private final TagRepository tagRepository;
     private final TroubleTagRepository troubleTagRepository;
+    private final AIAnalysisService aiAnalysisService;
 
     public CreateTroubleResponse create(CreateTroubleRequest request) {
 
@@ -53,6 +55,13 @@ public class TroubleService {
                 troubleTagRepository.save(troubleTag);
             });
         }
+        aiAnalysisService.analyzeAndSave(
+                saved,
+                request.title(),
+                request.description(),
+                request.rawLog(),
+                request.tags()
+        );
 
         return new CreateTroubleResponse(saved.getId());
     }

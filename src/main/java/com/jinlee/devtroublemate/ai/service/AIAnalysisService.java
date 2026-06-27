@@ -23,17 +23,17 @@ public class AIAnalysisService {
     private final ObjectMapper objectMapper;
 
     public AIAnalysisResponse analyzeAndSave(
-            Long troubleId,
-            AnalyzeTroubleLogRequest request
+            Trouble trouble,
+            String title,
+            String description,
+            String rawLog,
+            java.util.List<String> tags
     ) {
-        Trouble trouble = troubleRepository.findById(troubleId)
-                .orElseThrow(() -> new IllegalArgumentException("장애를 찾을 수 없습니다."));
-
         AIAnalysisResponse response = openAIService.analyzeTroubleLog(
-                request.title(),
-                request.description(),
-                request.rawLog(),
-                request.tags()
+                title,
+                description,
+                rawLog,
+                tags
         );
 
         AIAnalysis aiAnalysis = AIAnalysis.builder()
@@ -48,6 +48,22 @@ public class AIAnalysisService {
         aiAnalysisRepository.save(aiAnalysis);
 
         return response;
+    }
+
+    public AIAnalysisResponse analyzeAndSave(
+            Long troubleId,
+            AnalyzeTroubleLogRequest request
+    ) {
+        Trouble trouble = troubleRepository.findById(troubleId)
+                .orElseThrow(() -> new IllegalArgumentException("장애를 찾을 수 없습니다."));
+
+        return analyzeAndSave(
+                trouble,
+                request.title(),
+                request.description(),
+                request.rawLog(),
+                request.tags()
+        );
     }
 
     private String toJson(Object value) {
