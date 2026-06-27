@@ -4,8 +4,7 @@ import com.jinlee.devtroublemate.global.domain.BaseEntity;
 import com.jinlee.devtroublemate.trouble.domain.Trouble;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Getter
@@ -32,4 +31,21 @@ public class AIAnalysis extends BaseEntity {
     private String runbook;
 
     private Integer confidence;
+
+    @Builder
+    public AIAnalysis(
+            Trouble trouble,
+            String category,
+            String summary,
+            String possibleCauses,
+            String runbook,
+            Integer confidence
+    ) {
+        this.trouble = trouble;
+        this.category = category;
+        this.summary = summary;
+        this.possibleCauses = possibleCauses;
+        this.runbook = runbook;
+        this.confidence = confidence;
+    }
 }

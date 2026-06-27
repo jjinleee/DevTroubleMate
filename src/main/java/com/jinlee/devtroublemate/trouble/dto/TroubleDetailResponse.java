@@ -1,5 +1,7 @@
 package com.jinlee.devtroublemate.trouble.dto;
 
+import com.jinlee.devtroublemate.ai.dto.AIAnalysisSummaryResponse;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
@@ -31,6 +33,9 @@ public record TroubleDetailResponse(
         String referenceLink,
 
         @Schema(description = "태그 목록", example = "[\"JWT\", \"Docker\"]")
-        List<String> tags
+        List<String> tags,
+
+        @Schema(description = "AI 장애 분석 결과")
+        AIAnalysisSummaryResponse aiAnalysis
 ) {
 }
