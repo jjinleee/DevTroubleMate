@@ -1,5 +1,8 @@
 package com.jinlee.devtroublemate.trouble.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jinlee.devtroublemate.ai.dto.AIAnalysisSummaryResponse;
+import com.jinlee.devtroublemate.ai.repository.AIAnalysisRepository;
 import com.jinlee.devtroublemate.ai.service.AIAnalysisService;
 import com.jinlee.devtroublemate.tag.domain.Tag;
 import com.jinlee.devtroublemate.tag.domain.TroubleTag;
@@ -27,6 +30,8 @@ public class TroubleService {
     private final TagRepository tagRepository;
     private final TroubleTagRepository troubleTagRepository;
     private final AIAnalysisService aiAnalysisService;
+    private final AIAnalysisRepository aiAnalysisRepository;
+    private final ObjectMapper objectMapper;
 
     public CreateTroubleResponse create(CreateTroubleRequest request) {
 
@@ -80,6 +85,11 @@ public class TroubleService {
                 .map(troubleTag -> troubleTag.getTag().getName())
                 .toList();
 
+        AIAnalysisSummaryResponse aiAnalysis = aiAnalysisRepository
+                .findTopByTroubleOrderByCreatedAtDesc(trouble)
+                .map(analysis -> AIAnalysisSummaryResponse.from(analysis, objectMapper))
+                .orElse(null);
+
         return new TroubleDetailResponse(
                 trouble.getId(),
                 trouble.getTitle(),
@@ -89,7 +99,8 @@ public class TroubleService {
                 trouble.getActualCause(),
                 trouble.getSolution(),
                 trouble.getReferenceLink(),
-                tags
+                tags,
+                aiAnalysis
         );
     }
 
