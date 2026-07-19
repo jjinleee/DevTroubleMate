@@ -1,8 +1,11 @@
 package com.jinlee.devtroublemate.trouble.controller;
 
+import com.jinlee.devtroublemate.embedding.dto.SimilarTroubleResponse;
+import com.jinlee.devtroublemate.embedding.service.SimilarTroubleService;
 import com.jinlee.devtroublemate.trouble.dto.*;
 import com.jinlee.devtroublemate.trouble.service.TroubleService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -16,6 +19,7 @@ import java.util.List;
 public class TroubleController {
 
     private final TroubleService troubleService;
+    private final SimilarTroubleService similarTroubleService;
 
     @Operation(summary = "트러블 생성")
     @PostMapping
@@ -48,5 +52,17 @@ public class TroubleController {
             @RequestBody ResolveTroubleRequest request
     ) {
         troubleService.resolve(troubleId, request);
+    }
+
+    @Operation(summary = "유사 장애 검색", description = "기존 장애와 의미적으로 유사한 장애를 조회합니다.")
+    @GetMapping("/{troubleId}/similar")
+    public ResponseEntity<List<SimilarTroubleResponse>> findSimilarTroubles(
+            @PathVariable Long troubleId,
+            @RequestParam(defaultValue = "5") int limit
+    ) {
+
+        return ResponseEntity.ok(
+                similarTroubleService.findSimilarTroubles(troubleId, limit)
+        );
     }
 }
