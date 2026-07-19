@@ -8,6 +8,7 @@ import com.jinlee.devtroublemate.ai.dto.AnalyzeTroubleLogRequest;
 import com.jinlee.devtroublemate.ai.repository.AIAnalysisRepository;
 import com.jinlee.devtroublemate.trouble.domain.Trouble;
 import com.jinlee.devtroublemate.trouble.repository.TroubleRepository;
+import com.jinlee.devtroublemate.embedding.service.EmbeddingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,7 @@ public class AIAnalysisService {
     private final AIAnalysisRepository aiAnalysisRepository;
     private final TroubleRepository troubleRepository;
     private final ObjectMapper objectMapper;
+    private final EmbeddingService embeddingService;
 
     public AIAnalysisResponse analyzeAndSave(
             Trouble trouble,
@@ -46,6 +48,7 @@ public class AIAnalysisService {
                 .build();
 
         aiAnalysisRepository.save(aiAnalysis);
+        embeddingService.createOrUpdate(trouble, response);
 
         return response;
     }
