@@ -1,5 +1,6 @@
 package com.jinlee.devtroublemate.trouble.controller;
 
+import com.jinlee.devtroublemate.common.dto.PageResponse;
 import com.jinlee.devtroublemate.embedding.dto.SimilarTroubleResponse;
 import com.jinlee.devtroublemate.embedding.service.SimilarTroubleService;
 import com.jinlee.devtroublemate.trouble.dto.*;
@@ -10,6 +11,9 @@ import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 
 import java.util.List;
 
@@ -40,10 +44,11 @@ public class TroubleController {
 
     @Operation(summary = "트러블 목록 조회", description = "status, tag, keyword로 필터링")
     @GetMapping
-    public List<TroubleSummaryResponse> getTroubles(
-            @ModelAttribute TroubleSearchCondition condition
+    public PageResponse<TroubleSummaryResponse> getTroubles(
+            @ModelAttribute TroubleSearchCondition condition,
+            @ParameterObject @PageableDefault(size = 10) Pageable pageable
     ) {
-        return troubleService.getTroubles(condition);
+        return troubleService.getTroubles(condition, pageable);
     }
 
     @Operation(summary = "트러블 해결 처리")

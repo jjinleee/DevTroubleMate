@@ -1,6 +1,7 @@
 package com.jinlee.devtroublemate.trouble.controller;
 
 import com.jinlee.devtroublemate.common.exception.GlobalExceptionHandler;
+import com.jinlee.devtroublemate.common.dto.PageResponse;
 import com.jinlee.devtroublemate.embedding.service.SimilarTroubleService;
 import com.jinlee.devtroublemate.trouble.dto.CreateTroubleResponse;
 import com.jinlee.devtroublemate.trouble.exception.TroubleNotFoundException;
@@ -17,6 +18,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.stream.Stream;
+import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
@@ -83,6 +85,24 @@ class TroubleControllerTest {
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.code").value("TROUBLE_NOT_FOUND"))
                 .andExpect(jsonPath("$.message", containsString("troubleId=999")));
+    }
+
+    @Test
+    void getTroublesWithPagination() throws Exception {
+        when(troubleService.getTroubles(any(), any()))
+                .thenReturn(new PageResponse<>(List.of(), 1, 5, 12, 3, false));
+
+        mockMvc.perform(get("/api/troubles")
+                        .param("status", "OPEN")
+                        .param("page", "1")
+                        .param("size", "5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.page").value(1))
+                .andExpect(jsonPath("$.size").value(5))
+                .andExpect(jsonPath("$.totalElements").value(12))
+                .andExpect(jsonPath("$.totalPages").value(3))
+                .andExpect(jsonPath("$.last").value(false));
     }
 
     @ParameterizedTest

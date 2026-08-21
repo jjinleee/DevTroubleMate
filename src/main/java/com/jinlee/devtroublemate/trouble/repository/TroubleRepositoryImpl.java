@@ -6,6 +6,9 @@ import com.jinlee.devtroublemate.trouble.dto.TroubleSearchCondition;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.support.PageableExecutionUtils;
 
 import java.util.List;
 
@@ -19,8 +22,8 @@ public class TroubleRepositoryImpl implements TroubleRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public List<Trouble> search(TroubleSearchCondition condition) {
-        return queryFactory
+    public Page<Trouble> search(TroubleSearchCondition condition, Pageable pageable) {
+        List<Trouble> content = queryFactory
                 .selectDistinct(trouble)
                 .from(trouble)
                 .leftJoin(troubleTag).on(troubleTag.trouble.eq(trouble))
@@ -31,7 +34,26 @@ public class TroubleRepositoryImpl implements TroubleRepositoryCustom {
                         keywordContains(condition.keyword())
                 )
                 .orderBy(trouble.createdAt.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
                 .fetch();
+
+        var countQuery = queryFactory
+                .select(trouble.id.countDistinct())
+                .from(trouble)
+                .leftJoin(troubleTag).on(troubleTag.trouble.eq(trouble))
+                .leftJoin(troubleTag.tag, tag)
+                .where(
+                        statusEq(condition.status()),
+                        tagEq(condition.tag()),
+                        keywordContains(condition.keyword())
+                );
+
+        return PageableExecutionUtils.getPage(
+                content,
+                pageable,
+                () -> countQuery.fetchOne()
+        );
     }
 
     private BooleanExpression statusEq(String status) {
