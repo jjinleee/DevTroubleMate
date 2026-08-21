@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -24,7 +25,7 @@ public class TroubleController {
     @Operation(summary = "트러블 생성")
     @PostMapping
     public CreateTroubleResponse create(
-            @RequestBody CreateTroubleRequest request
+            @Valid @RequestBody CreateTroubleRequest request
     ) {
         return troubleService.create(request);
     }
@@ -49,7 +50,7 @@ public class TroubleController {
     @PatchMapping("/{troubleId}/resolution")
     public void resolve(
             @PathVariable Long troubleId,
-            @RequestBody ResolveTroubleRequest request
+            @Valid @RequestBody ResolveTroubleRequest request
     ) {
         troubleService.resolve(troubleId, request);
     }
