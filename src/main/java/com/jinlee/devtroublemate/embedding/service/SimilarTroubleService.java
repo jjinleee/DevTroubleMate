@@ -3,6 +3,7 @@ package com.jinlee.devtroublemate.embedding.service;
 import com.jinlee.devtroublemate.embedding.dto.SimilarTroubleResponse;
 import com.jinlee.devtroublemate.embedding.repository.TroubleEmbeddingRepository;
 import com.jinlee.devtroublemate.trouble.domain.Trouble;
+import com.jinlee.devtroublemate.trouble.exception.TroubleNotFoundException;
 import com.jinlee.devtroublemate.trouble.repository.TroubleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,7 @@ public class SimilarTroubleService {
     public List<SimilarTroubleResponse> findSimilarTroubles(Long troubleId, int limit) {
 
         Trouble trouble = troubleRepository.findById(troubleId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 장애입니다."));
+                .orElseThrow(() -> new TroubleNotFoundException(troubleId));
 
         List<Object[]> results =
                 troubleEmbeddingRepository.findSimilarTroubles(

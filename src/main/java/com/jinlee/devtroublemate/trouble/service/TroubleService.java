@@ -12,6 +12,7 @@ import com.jinlee.devtroublemate.trouble.dto.TroubleSearchCondition;
 
 import com.jinlee.devtroublemate.trouble.domain.Trouble;
 import com.jinlee.devtroublemate.trouble.dto.*;
+import com.jinlee.devtroublemate.trouble.exception.TroubleNotFoundException;
 import com.jinlee.devtroublemate.trouble.repository.TroubleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -76,7 +77,7 @@ public class TroubleService {
 
         Trouble trouble = troubleRepository.findById(troubleId)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("장애를 찾을 수 없습니다.")
+                        new TroubleNotFoundException(troubleId)
                 );
 
         List<String> tags = troubleTagRepository
@@ -143,7 +144,7 @@ public class TroubleService {
 
         Trouble trouble = troubleRepository.findById(troubleId)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("장애를 찾을 수 없습니다.")
+                        new TroubleNotFoundException(troubleId)
                 );
 
         trouble.resolve(

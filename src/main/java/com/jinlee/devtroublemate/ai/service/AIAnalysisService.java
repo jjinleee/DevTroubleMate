@@ -7,6 +7,7 @@ import com.jinlee.devtroublemate.ai.dto.AIAnalysisResponse;
 import com.jinlee.devtroublemate.ai.dto.AnalyzeTroubleLogRequest;
 import com.jinlee.devtroublemate.ai.repository.AIAnalysisRepository;
 import com.jinlee.devtroublemate.trouble.domain.Trouble;
+import com.jinlee.devtroublemate.trouble.exception.TroubleNotFoundException;
 import com.jinlee.devtroublemate.trouble.repository.TroubleRepository;
 import com.jinlee.devtroublemate.embedding.service.EmbeddingService;
 import lombok.RequiredArgsConstructor;
@@ -58,7 +59,7 @@ public class AIAnalysisService {
             AnalyzeTroubleLogRequest request
     ) {
         Trouble trouble = troubleRepository.findById(troubleId)
-                .orElseThrow(() -> new IllegalArgumentException("장애를 찾을 수 없습니다."));
+                .orElseThrow(() -> new TroubleNotFoundException(troubleId));
 
         return analyzeAndSave(
                 trouble,
