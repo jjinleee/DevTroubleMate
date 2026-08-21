@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jinlee.devtroublemate.ai.dto.AIAnalysisSummaryResponse;
 import com.jinlee.devtroublemate.ai.repository.AIAnalysisRepository;
 import com.jinlee.devtroublemate.ai.service.AIAnalysisService;
+import com.jinlee.devtroublemate.common.dto.PageResponse;
 import com.jinlee.devtroublemate.tag.domain.Tag;
 import com.jinlee.devtroublemate.tag.domain.TroubleTag;
 import com.jinlee.devtroublemate.tag.repository.TagRepository;
@@ -15,6 +16,8 @@ import com.jinlee.devtroublemate.trouble.dto.*;
 import com.jinlee.devtroublemate.trouble.exception.TroubleNotFoundException;
 import com.jinlee.devtroublemate.trouble.repository.TroubleRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -106,15 +109,18 @@ public class TroubleService {
     }
 
     @Transactional(readOnly = true)
-    public List<TroubleSummaryResponse> getTroubles(TroubleSearchCondition condition) {
+    public PageResponse<TroubleSummaryResponse> getTroubles(
+            TroubleSearchCondition condition,
+            Pageable pageable
+    ) {
 
-        List<Trouble> troubles = troubleRepository.search(condition);
+        Page<Trouble> troubles = troubleRepository.search(condition, pageable);
 
-        if (troubles.isEmpty()) {
-            return List.of();
+        if (!troubles.hasContent()) {
+            return PageResponse.from(troubles.map(this::toSummaryResponse));
         }
 
-        List<Long> troubleIds = troubles.stream()
+        List<Long> troubleIds = troubles.getContent().stream()
                 .map(Trouble::getId)
                 .toList();
 
@@ -126,15 +132,28 @@ public class TroubleService {
                         Collectors.mapping(troubleTag -> troubleTag.getTag().getName(), Collectors.toList())
                 ));
 
-        return troubles.stream()
-                .map(trouble -> new TroubleSummaryResponse(
-                        trouble.getId(),
-                        trouble.getTitle(),
-                        trouble.getStatus().name(),
-                        trouble.getCreatedAt(),
+        Page<TroubleSummaryResponse> response = troubles.map(trouble ->
+                toSummaryResponse(
+                        trouble,
                         tagsByTroubleId.getOrDefault(trouble.getId(), List.of())
-                ))
-                .toList();
+                )
+        );
+
+        return PageResponse.from(response);
+    }
+
+    private TroubleSummaryResponse toSummaryResponse(Trouble trouble) {
+        return toSummaryResponse(trouble, List.of());
+    }
+
+    private TroubleSummaryResponse toSummaryResponse(Trouble trouble, List<String> tags) {
+        return new TroubleSummaryResponse(
+                trouble.getId(),
+                trouble.getTitle(),
+                trouble.getStatus().name(),
+                trouble.getCreatedAt(),
+                tags
+        );
     }
 
     public void resolve(

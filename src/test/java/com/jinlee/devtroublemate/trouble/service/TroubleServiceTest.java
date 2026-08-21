@@ -3,12 +3,15 @@ package com.jinlee.devtroublemate.trouble.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jinlee.devtroublemate.ai.repository.AIAnalysisRepository;
 import com.jinlee.devtroublemate.ai.service.AIAnalysisService;
+import com.jinlee.devtroublemate.common.dto.PageResponse;
 import com.jinlee.devtroublemate.tag.repository.TagRepository;
 import com.jinlee.devtroublemate.tag.repository.TroubleTagRepository;
 import com.jinlee.devtroublemate.trouble.domain.Trouble;
 import com.jinlee.devtroublemate.trouble.domain.TroubleStatus;
 import com.jinlee.devtroublemate.trouble.dto.ResolveTroubleRequest;
 import com.jinlee.devtroublemate.trouble.dto.TroubleDetailResponse;
+import com.jinlee.devtroublemate.trouble.dto.TroubleSearchCondition;
+import com.jinlee.devtroublemate.trouble.dto.TroubleSummaryResponse;
 import com.jinlee.devtroublemate.trouble.exception.TroubleNotFoundException;
 import com.jinlee.devtroublemate.trouble.repository.TroubleRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,6 +20,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -79,6 +85,45 @@ class TroubleServiceTest {
         assertThatThrownBy(() -> troubleService.getDetail(999L))
                 .isInstanceOf(TroubleNotFoundException.class)
                 .hasMessageContaining("troubleId=999");
+    }
+
+    @Test
+    void getTroublesWithPagination() {
+        Trouble first = trouble(1L);
+        Trouble second = trouble(2L);
+        TroubleSearchCondition condition = new TroubleSearchCondition("OPEN", null, "JWT");
+        Pageable pageable = PageRequest.of(1, 2);
+        when(troubleRepository.search(condition, pageable))
+                .thenReturn(new PageImpl<>(List.of(first, second), pageable, 5));
+        when(troubleTagRepository.findAllWithTagByTroubleIdIn(List.of(1L, 2L)))
+                .thenReturn(List.of());
+
+        PageResponse<TroubleSummaryResponse> response =
+                troubleService.getTroubles(condition, pageable);
+
+        assertThat(response.content()).hasSize(2);
+        assertThat(response.page()).isEqualTo(1);
+        assertThat(response.size()).isEqualTo(2);
+        assertThat(response.totalElements()).isEqualTo(5);
+        assertThat(response.totalPages()).isEqualTo(3);
+        assertThat(response.last()).isFalse();
+        verify(troubleRepository).search(condition, pageable);
+    }
+
+    @Test
+    void getEmptyTroublePage() {
+        TroubleSearchCondition condition = new TroubleSearchCondition(null, null, null);
+        Pageable pageable = PageRequest.of(0, 10);
+        when(troubleRepository.search(condition, pageable))
+                .thenReturn(new PageImpl<>(List.of(), pageable, 0));
+
+        PageResponse<TroubleSummaryResponse> response =
+                troubleService.getTroubles(condition, pageable);
+
+        assertThat(response.content()).isEmpty();
+        assertThat(response.totalElements()).isZero();
+        assertThat(response.totalPages()).isZero();
+        assertThat(response.last()).isTrue();
     }
 
     @Test
