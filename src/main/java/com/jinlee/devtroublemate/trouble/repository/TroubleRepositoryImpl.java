@@ -3,14 +3,18 @@ package com.jinlee.devtroublemate.trouble.repository;
 import com.jinlee.devtroublemate.trouble.domain.Trouble;
 import com.jinlee.devtroublemate.trouble.domain.TroubleStatus;
 import com.jinlee.devtroublemate.trouble.dto.TroubleSearchCondition;
+import com.jinlee.devtroublemate.trouble.exception.InvalidTroubleSortException;
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.support.PageableExecutionUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.jinlee.devtroublemate.tag.domain.QTag.tag;
@@ -32,7 +36,7 @@ public class TroubleRepositoryImpl implements TroubleRepositoryCustom {
                         keywordContains(condition.keyword()),
                         archivedEq(condition.archived())
                 )
-                .orderBy(trouble.createdAt.desc())
+                .orderBy(orderSpecifiers(pageable))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -91,5 +95,23 @@ public class TroubleRepositoryImpl implements TroubleRepositoryCustom {
         return Boolean.TRUE.equals(archived)
                 ? trouble.archivedAt.isNotNull()
                 : trouble.archivedAt.isNull();
+    }
+
+    private OrderSpecifier<?>[] orderSpecifiers(Pageable pageable) {
+        List<OrderSpecifier<?>> orderSpecifiers = new ArrayList<>();
+        pageable.getSort().forEach(order -> orderSpecifiers.add(toOrderSpecifier(order)));
+        orderSpecifiers.add(trouble.id.desc());
+        return orderSpecifiers.toArray(OrderSpecifier[]::new);
+    }
+
+    private OrderSpecifier<?> toOrderSpecifier(Sort.Order order) {
+        boolean ascending = order.isAscending();
+        return switch (order.getProperty()) {
+            case "createdAt" -> ascending ? trouble.createdAt.asc() : trouble.createdAt.desc();
+            case "updatedAt" -> ascending ? trouble.updatedAt.asc() : trouble.updatedAt.desc();
+            case "title" -> ascending ? trouble.title.asc() : trouble.title.desc();
+            case "status" -> ascending ? trouble.status.asc() : trouble.status.desc();
+            default -> throw new InvalidTroubleSortException(order.getProperty());
+        };
     }
 }

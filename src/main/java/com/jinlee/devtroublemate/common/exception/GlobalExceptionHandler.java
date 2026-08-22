@@ -4,6 +4,7 @@ import com.jinlee.devtroublemate.ai.exception.AIServiceException;
 import com.jinlee.devtroublemate.ai.exception.AIProcessingInProgressException;
 import com.jinlee.devtroublemate.ai.exception.AIRetryNotAllowedException;
 import com.jinlee.devtroublemate.trouble.exception.TroubleNotFoundException;
+import com.jinlee.devtroublemate.trouble.exception.InvalidTroubleSortException;
 import com.jinlee.devtroublemate.retrospective.exception.RetrospectiveAlreadyExistsException;
 import com.jinlee.devtroublemate.retrospective.exception.RetrospectiveNotFoundException;
 import com.jinlee.devtroublemate.embedding.exception.TroubleEmbeddingNotFoundException;
@@ -11,6 +12,7 @@ import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -100,6 +102,28 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST.value(),
                 "VALIDATION_ERROR",
                 message
+        ));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatchException(
+            MethodArgumentTypeMismatchException exception
+    ) {
+        return ResponseEntity.badRequest().body(ErrorResponse.of(
+                HttpStatus.BAD_REQUEST.value(),
+                "VALIDATION_ERROR",
+                exception.getName() + " 값의 형식이 올바르지 않습니다."
+        ));
+    }
+
+    @ExceptionHandler(InvalidTroubleSortException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidTroubleSortException(
+            InvalidTroubleSortException exception
+    ) {
+        return ResponseEntity.badRequest().body(ErrorResponse.of(
+                HttpStatus.BAD_REQUEST.value(),
+                "VALIDATION_ERROR",
+                exception.getMessage()
         ));
     }
 
