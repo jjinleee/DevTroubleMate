@@ -20,24 +20,25 @@ public interface TroubleEmbeddingRepository
             t.id,
             t.title,
             t.status,
-            1 - (te.embedding <=> target.embedding) AS similarity
+            1 - (te.embedding <=> (
+                SELECT target.embedding
+                FROM trouble_embedding target
+                WHERE target.trouble_id = :troubleId
+            )) AS similarity
         FROM trouble_embedding te
         JOIN trouble t
             ON te.trouble_id = t.id
-        CROSS JOIN (
-            SELECT embedding
-            FROM trouble_embedding
-            WHERE trouble_id = :troubleId
-        ) target
         WHERE te.trouble_id <> :troubleId
           AND t.archived_at IS NULL
-          AND 1 - (te.embedding <=> target.embedding) >= :minSimilarity
-        ORDER BY te.embedding <=> target.embedding
+        ORDER BY te.embedding <=> (
+            SELECT target.embedding
+            FROM trouble_embedding target
+            WHERE target.trouble_id = :troubleId
+        )
         LIMIT :limit
         """, nativeQuery = true)
     List<Object[]> findSimilarTroubles(
             @Param("troubleId") Long troubleId,
-            @Param("limit") int limit,
-            @Param("minSimilarity") double minSimilarity
+            @Param("limit") int limit
     );
 }
