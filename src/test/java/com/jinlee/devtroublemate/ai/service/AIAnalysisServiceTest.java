@@ -8,6 +8,7 @@ import com.jinlee.devtroublemate.ai.exception.AIProcessingInProgressException;
 import com.jinlee.devtroublemate.ai.exception.AIServiceException;
 import com.jinlee.devtroublemate.ai.repository.AIAnalysisRepository;
 import com.jinlee.devtroublemate.embedding.service.EmbeddingService;
+import com.jinlee.devtroublemate.tag.repository.TroubleTagRepository;
 import com.jinlee.devtroublemate.trouble.domain.Trouble;
 import com.jinlee.devtroublemate.trouble.repository.TroubleRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,6 +36,8 @@ class AIAnalysisServiceTest {
     private TroubleRepository troubleRepository;
     @Mock
     private EmbeddingService embeddingService;
+    @Mock
+    private TroubleTagRepository troubleTagRepository;
 
     private AIAnalysisService aiAnalysisService;
 
@@ -45,7 +48,8 @@ class AIAnalysisServiceTest {
                 aiAnalysisRepository,
                 troubleRepository,
                 new ObjectMapper(),
-                embeddingService
+                embeddingService,
+                troubleTagRepository
         );
     }
 
