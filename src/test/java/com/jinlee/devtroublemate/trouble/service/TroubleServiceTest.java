@@ -6,12 +6,15 @@ import com.jinlee.devtroublemate.ai.service.AIAnalysisService;
 import com.jinlee.devtroublemate.common.dto.PageResponse;
 import com.jinlee.devtroublemate.tag.repository.TagRepository;
 import com.jinlee.devtroublemate.tag.repository.TroubleTagRepository;
+import com.jinlee.devtroublemate.tag.domain.Tag;
+import com.jinlee.devtroublemate.tag.domain.TroubleTag;
 import com.jinlee.devtroublemate.trouble.domain.Trouble;
 import com.jinlee.devtroublemate.trouble.domain.TroubleStatus;
 import com.jinlee.devtroublemate.trouble.dto.ResolveTroubleRequest;
 import com.jinlee.devtroublemate.trouble.dto.TroubleDetailResponse;
 import com.jinlee.devtroublemate.trouble.dto.TroubleSearchCondition;
 import com.jinlee.devtroublemate.trouble.dto.TroubleSummaryResponse;
+import com.jinlee.devtroublemate.trouble.dto.UpdateTroubleRequest;
 import com.jinlee.devtroublemate.trouble.exception.TroubleNotFoundException;
 import com.jinlee.devtroublemate.trouble.repository.TroubleRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -83,6 +86,52 @@ class TroubleServiceTest {
         when(troubleRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> troubleService.getDetail(999L))
+                .isInstanceOf(TroubleNotFoundException.class)
+                .hasMessageContaining("troubleId=999");
+    }
+
+    @Test
+    void updateTroubleAndRefreshAnalysis() {
+        Trouble trouble = trouble(1L);
+        TroubleTag existingTag = TroubleTag.builder()
+                .trouble(trouble)
+                .tag(Tag.builder().name("Old").build())
+                .build();
+        UpdateTroubleRequest request = new UpdateTroubleRequest(
+                "수정 제목",
+                "수정 설명",
+                "수정 로그",
+                List.of(" Spring ", "Spring")
+        );
+        Tag spring = Tag.builder().name("Spring").build();
+        when(troubleRepository.findById(1L)).thenReturn(Optional.of(trouble));
+        when(troubleTagRepository.findAllByTrouble(trouble)).thenReturn(List.of(existingTag));
+        when(tagRepository.findByName("Spring")).thenReturn(Optional.of(spring));
+
+        troubleService.update(1L, request);
+
+        assertThat(trouble.getTitle()).isEqualTo("수정 제목");
+        assertThat(trouble.getDescription()).isEqualTo("수정 설명");
+        assertThat(trouble.getRawLog()).isEqualTo("수정 로그");
+        verify(troubleTagRepository).deleteAll(List.of(existingTag));
+        verify(tagRepository).findByName("Spring");
+        verify(aiAnalysisService).analyzeAndSave(
+                trouble,
+                "수정 제목",
+                "수정 설명",
+                "수정 로그",
+                List.of("Spring")
+        );
+    }
+
+    @Test
+    void throwExceptionWhenUpdatingMissingTrouble() {
+        when(troubleRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> troubleService.update(
+                999L,
+                new UpdateTroubleRequest("제목", "설명", "로그", List.of("태그"))
+        ))
                 .isInstanceOf(TroubleNotFoundException.class)
                 .hasMessageContaining("troubleId=999");
     }

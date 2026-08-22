@@ -47,23 +47,7 @@ public class TroubleService {
 
         Trouble saved = troubleRepository.save(trouble);
 
-        if (request.tags() != null) {
-            request.tags().forEach(tagName -> {
-                Tag tag = tagRepository.findByName(tagName)
-                        .orElseGet(() -> tagRepository.save(
-                                Tag.builder()
-                                        .name(tagName)
-                                        .build()
-                        ));
-
-                TroubleTag troubleTag = TroubleTag.builder()
-                        .trouble(saved)
-                        .tag(tag)
-                        .build();
-
-                troubleTagRepository.save(troubleTag);
-            });
-        }
+        saveTags(saved, request.tags());
         aiAnalysisService.analyzeAndSave(
                 saved,
                 request.title(),
@@ -73,6 +57,29 @@ public class TroubleService {
         );
 
         return new CreateTroubleResponse(saved.getId());
+    }
+
+    public void update(Long troubleId, UpdateTroubleRequest request) {
+        Trouble trouble = troubleRepository.findById(troubleId)
+                .orElseThrow(() -> new TroubleNotFoundException(troubleId));
+
+        trouble.update(
+                request.title(),
+                request.description(),
+                request.rawLog()
+        );
+
+        List<TroubleTag> existingTags = troubleTagRepository.findAllByTrouble(trouble);
+        troubleTagRepository.deleteAll(existingTags);
+        saveTags(trouble, request.tags());
+
+        aiAnalysisService.analyzeAndSave(
+                trouble,
+                request.title(),
+                request.description(),
+                request.rawLog(),
+                normalizeTags(request.tags())
+        );
     }
 
     @Transactional(readOnly = true)
@@ -154,6 +161,31 @@ public class TroubleService {
                 trouble.getCreatedAt(),
                 tags
         );
+    }
+
+    private void saveTags(Trouble trouble, List<String> tagNames) {
+        normalizeTags(tagNames).forEach(tagName -> {
+            Tag tag = tagRepository.findByName(tagName)
+                    .orElseGet(() -> tagRepository.save(
+                            Tag.builder()
+                                    .name(tagName)
+                                    .build()
+                    ));
+
+            TroubleTag troubleTag = TroubleTag.builder()
+                    .trouble(trouble)
+                    .tag(tag)
+                    .build();
+
+            troubleTagRepository.save(troubleTag);
+        });
+    }
+
+    private List<String> normalizeTags(List<String> tagNames) {
+        return tagNames.stream()
+                .map(String::trim)
+                .distinct()
+                .toList();
     }
 
     public void resolve(
