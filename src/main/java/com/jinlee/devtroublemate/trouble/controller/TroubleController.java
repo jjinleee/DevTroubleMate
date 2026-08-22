@@ -42,6 +42,16 @@ public class TroubleController {
         return troubleService.getDetail(troubleId);
     }
 
+    @Operation(summary = "트러블 수정", description = "트러블과 태그를 수정하고 AI 분석 및 임베딩을 갱신합니다.")
+    @PutMapping("/{troubleId}")
+    public ResponseEntity<Void> update(
+            @PathVariable Long troubleId,
+            @Valid @RequestBody UpdateTroubleRequest request
+    ) {
+        troubleService.update(troubleId, request);
+        return ResponseEntity.noContent().build();
+    }
+
     @Operation(summary = "트러블 목록 조회", description = "status, tag, keyword로 필터링")
     @GetMapping
     public PageResponse<TroubleSummaryResponse> getTroubles(

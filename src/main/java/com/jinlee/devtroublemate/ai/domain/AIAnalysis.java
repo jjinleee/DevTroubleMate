@@ -48,4 +48,18 @@ public class AIAnalysis extends BaseEntity {
         this.runbook = runbook;
         this.confidence = confidence;
     }
+
+    public void update(
+            String category,
+            String summary,
+            String possibleCauses,
+            String runbook,
+            Integer confidence
+    ) {
+        this.category = category;
+        this.summary = summary;
+        this.possibleCauses = possibleCauses;
+        this.runbook = runbook;
+        this.confidence = confidence;
+    }
 }

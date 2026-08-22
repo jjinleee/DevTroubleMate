@@ -27,6 +27,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -85,6 +86,36 @@ class TroubleControllerTest {
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.code").value("TROUBLE_NOT_FOUND"))
                 .andExpect(jsonPath("$.message", containsString("troubleId=999")));
+    }
+
+    @Test
+    void updateTrouble() throws Exception {
+        mockMvc.perform(put("/api/troubles/{troubleId}", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(updateRequest("수정 제목", "수정 설명", "수정 로그", "[\"JWT\"]")))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void rejectInvalidUpdateRequest() throws Exception {
+        mockMvc.perform(put("/api/troubles/{troubleId}", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(updateRequest("", "수정 설명", "수정 로그", "[\"JWT\"]")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message").value("제목은 필수입니다."));
+    }
+
+    @Test
+    void returnNotFoundWhenUpdatingMissingTrouble() throws Exception {
+        doThrow(new TroubleNotFoundException(999L))
+                .when(troubleService).update(any(), any());
+
+        mockMvc.perform(put("/api/troubles/{troubleId}", 999L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(updateRequest("수정 제목", "수정 설명", "수정 로그", "[\"JWT\"]")))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("TROUBLE_NOT_FOUND"));
     }
 
     @Test
@@ -174,5 +205,21 @@ class TroubleControllerTest {
                   "solution": "%s"
                 }
                 """.formatted(actualCause, solution);
+    }
+
+    private static String updateRequest(
+            String title,
+            String description,
+            String rawLog,
+            String tags
+    ) {
+        return """
+                {
+                  "title": "%s",
+                  "description": "%s",
+                  "rawLog": "%s",
+                  "tags": %s
+                }
+                """.formatted(title, description, rawLog, tags);
     }
 }

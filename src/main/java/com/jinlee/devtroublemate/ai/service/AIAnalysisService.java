@@ -39,14 +39,29 @@ public class AIAnalysisService {
                 tags
         );
 
-        AIAnalysis aiAnalysis = AIAnalysis.builder()
-                .trouble(trouble)
-                .category(response.category())
-                .summary(response.summary())
-                .possibleCauses(toJson(response.possibleCauses()))
-                .runbook(toJson(response.runbook()))
-                .confidence(response.confidence())
-                .build();
+        String possibleCauses = toJson(response.possibleCauses());
+        String runbook = toJson(response.runbook());
+
+        AIAnalysis aiAnalysis = aiAnalysisRepository
+                .findTopByTroubleOrderByCreatedAtDesc(trouble)
+                .map(existing -> {
+                    existing.update(
+                            response.category(),
+                            response.summary(),
+                            possibleCauses,
+                            runbook,
+                            response.confidence()
+                    );
+                    return existing;
+                })
+                .orElseGet(() -> AIAnalysis.builder()
+                        .trouble(trouble)
+                        .category(response.category())
+                        .summary(response.summary())
+                        .possibleCauses(possibleCauses)
+                        .runbook(runbook)
+                        .confidence(response.confidence())
+                        .build());
 
         aiAnalysisRepository.save(aiAnalysis);
         embeddingService.createOrUpdate(trouble, response);

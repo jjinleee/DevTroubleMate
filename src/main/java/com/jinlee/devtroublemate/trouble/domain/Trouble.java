@@ -53,4 +53,14 @@ public class Trouble extends BaseEntity{
         this.status = TroubleStatus.RESOLVED;
     }
 
+    public void update(
+            String title,
+            String description,
+            String rawLog
+    ) {
+        this.title = title;
+        this.description = description;
+        this.rawLog = rawLog;
+    }
+
 }
