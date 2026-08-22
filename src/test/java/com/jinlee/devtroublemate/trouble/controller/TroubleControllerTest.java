@@ -14,19 +14,23 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.data.domain.Pageable;
 
 import java.util.stream.Stream;
 import java.util.List;
 import java.time.LocalDateTime;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -171,7 +175,8 @@ class TroubleControllerTest {
         mockMvc.perform(get("/api/troubles")
                         .param("status", "OPEN")
                         .param("page", "1")
-                        .param("size", "5"))
+                        .param("size", "5")
+                        .param("sort", "title,asc"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.page").value(1))
@@ -179,6 +184,33 @@ class TroubleControllerTest {
                 .andExpect(jsonPath("$.totalElements").value(12))
                 .andExpect(jsonPath("$.totalPages").value(3))
                 .andExpect(jsonPath("$.last").value(false));
+
+        var pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        verify(troubleService).getTroubles(any(), pageableCaptor.capture());
+        Pageable pageable = pageableCaptor.getValue();
+        assertThat(pageable.getPageNumber()).isEqualTo(1);
+        assertThat(pageable.getPageSize()).isEqualTo(5);
+        assertThat(pageable.getSort().getOrderFor("title")).isNotNull();
+        assertThat(pageable.getSort().getOrderFor("title").isAscending()).isTrue();
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidTroubleListParameters")
+    void rejectInvalidTroubleListParameters(String name, String value, String expectedMessage) throws Exception {
+        mockMvc.perform(get("/api/troubles").param(name, value))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message").value(expectedMessage));
+    }
+
+    @Test
+    void rejectNonNumericPage() throws Exception {
+        mockMvc.perform(get("/api/troubles").param("page", "invalid"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message").value("page 값의 형식이 올바르지 않습니다."));
     }
 
     @Test
@@ -258,6 +290,17 @@ class TroubleControllerTest {
                 Arguments.of(createRequest("제목", " ", "로그", "[\"JWT\"]"), "상세 설명은 필수입니다."),
                 Arguments.of(createRequest("제목", "설명", "", "[\"JWT\"]"), "원본 로그는 필수입니다."),
                 Arguments.of(createRequest("제목", "설명", "로그", "[]"), "태그는 하나 이상 입력해야 합니다.")
+        );
+    }
+
+    private static Stream<Arguments> invalidTroubleListParameters() {
+        return Stream.of(
+                Arguments.of("page", "-1", "page는 0 이상이어야 합니다."),
+                Arguments.of("size", "0", "size는 1 이상이어야 합니다."),
+                Arguments.of("size", "101", "size는 100 이하여야 합니다."),
+                Arguments.of("sort", "id,desc", "sort는 허용된 필드와 방향으로 입력해야 합니다."),
+                Arguments.of("sort", "createdAt,sideways", "sort는 허용된 필드와 방향으로 입력해야 합니다."),
+                Arguments.of("status", "INVALID", "status는 OPEN 또는 RESOLVED여야 합니다.")
         );
     }
 

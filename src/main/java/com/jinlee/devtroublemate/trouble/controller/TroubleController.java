@@ -16,9 +16,11 @@ import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
+import org.springframework.data.domain.Sort;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
@@ -62,10 +64,29 @@ public class TroubleController {
     @Operation(summary = "트러블 목록 조회", description = "status, tag, keyword로 필터링")
     @GetMapping
     public PageResponse<TroubleSummaryResponse> getTroubles(
-            @ModelAttribute TroubleSearchCondition condition,
-            @ParameterObject @PageableDefault(size = 10) Pageable pageable
+            @Valid @ParameterObject @ModelAttribute TroubleSearchCondition condition,
+            @RequestParam(defaultValue = "0")
+            @Min(value = 0, message = "page는 0 이상이어야 합니다.")
+            int page,
+            @RequestParam(defaultValue = "10")
+            @Min(value = 1, message = "size는 1 이상이어야 합니다.")
+            @Max(value = 100, message = "size는 100 이하여야 합니다.")
+            int size,
+            @RequestParam(defaultValue = "createdAt,desc")
+            @Pattern(
+                    regexp = "^(createdAt|updatedAt|title|status),(?i:asc|desc)$",
+                    message = "sort는 허용된 필드와 방향으로 입력해야 합니다."
+            )
+            String sort
     ) {
+        Pageable pageable = toPageable(page, size, sort);
         return troubleService.getTroubles(condition, pageable);
+    }
+
+    private Pageable toPageable(int page, int size, String sort) {
+        String[] sortParts = sort.split(",");
+        Sort.Direction direction = Sort.Direction.fromString(sortParts[1]);
+        return PageRequest.of(page, size, Sort.by(direction, sortParts[0]));
     }
 
     @Operation(summary = "트러블 해결 처리")
