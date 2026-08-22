@@ -6,6 +6,7 @@ import com.jinlee.devtroublemate.ai.dto.AIProcessingResponse;
 import com.jinlee.devtroublemate.ai.domain.AIProcessingStatus;
 import com.jinlee.devtroublemate.ai.exception.AIRetryNotAllowedException;
 import com.jinlee.devtroublemate.ai.exception.AIServiceException;
+import com.jinlee.devtroublemate.ai.event.AIAnalysisRequestedEvent;
 import com.jinlee.devtroublemate.ai.repository.AIAnalysisRepository;
 import com.jinlee.devtroublemate.ai.service.AIAnalysisService;
 import com.jinlee.devtroublemate.common.dto.PageResponse;
@@ -23,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -40,6 +42,7 @@ public class TroubleService {
     private final AIAnalysisService aiAnalysisService;
     private final AIAnalysisRepository aiAnalysisRepository;
     private final ObjectMapper objectMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     public CreateTroubleResponse create(CreateTroubleRequest request) {
 
@@ -52,7 +55,7 @@ public class TroubleService {
         Trouble saved = troubleRepository.save(trouble);
 
         saveTags(saved, request.tags());
-        tryAnalyze(saved, request.title(), request.description(), request.rawLog(), request.tags());
+        eventPublisher.publishEvent(new AIAnalysisRequestedEvent(saved.getId()));
 
         return new CreateTroubleResponse(saved.getId());
     }
@@ -70,14 +73,8 @@ public class TroubleService {
         List<TroubleTag> existingTags = troubleTagRepository.findAllByTrouble(trouble);
         troubleTagRepository.deleteAll(existingTags);
         saveTags(trouble, request.tags());
-
-        tryAnalyze(
-                trouble,
-                request.title(),
-                request.description(),
-                request.rawLog(),
-                normalizeTags(request.tags())
-        );
+        trouble.resetAIProcessing();
+        eventPublisher.publishEvent(new AIAnalysisRequestedEvent(trouble.getId()));
     }
 
     @Transactional(readOnly = true)

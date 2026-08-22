@@ -13,6 +13,7 @@ import com.jinlee.devtroublemate.trouble.domain.Trouble;
 import com.jinlee.devtroublemate.trouble.exception.TroubleNotFoundException;
 import com.jinlee.devtroublemate.trouble.repository.TroubleRepository;
 import com.jinlee.devtroublemate.embedding.service.EmbeddingService;
+import com.jinlee.devtroublemate.tag.repository.TroubleTagRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +28,7 @@ public class AIAnalysisService {
     private final TroubleRepository troubleRepository;
     private final ObjectMapper objectMapper;
     private final EmbeddingService embeddingService;
+    private final TroubleTagRepository troubleTagRepository;
 
     public AIAnalysisResponse analyzeAndSave(
             Trouble trouble,
@@ -84,6 +86,22 @@ public class AIAnalysisService {
             troubleRepository.save(trouble);
             throw exception;
         }
+    }
+
+    public AIAnalysisResponse analyzeStoredTrouble(Long troubleId) {
+        Trouble trouble = troubleRepository.findById(troubleId)
+                .orElseThrow(() -> new TroubleNotFoundException(troubleId));
+        java.util.List<String> tags = troubleTagRepository.findAllByTrouble(trouble).stream()
+                .map(troubleTag -> troubleTag.getTag().getName())
+                .toList();
+
+        return analyzeAndSave(
+                trouble,
+                trouble.getTitle(),
+                trouble.getDescription(),
+                trouble.getRawLog(),
+                tags
+        );
     }
 
     public AIAnalysisResponse analyzeAndSave(

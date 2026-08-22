@@ -5,6 +5,7 @@ import com.jinlee.devtroublemate.ai.repository.AIAnalysisRepository;
 import com.jinlee.devtroublemate.ai.service.AIAnalysisService;
 import com.jinlee.devtroublemate.ai.domain.AIProcessingStatus;
 import com.jinlee.devtroublemate.ai.exception.AIRetryNotAllowedException;
+import com.jinlee.devtroublemate.ai.event.AIAnalysisRequestedEvent;
 import com.jinlee.devtroublemate.common.dto.PageResponse;
 import com.jinlee.devtroublemate.tag.repository.TagRepository;
 import com.jinlee.devtroublemate.tag.repository.TroubleTagRepository;
@@ -25,6 +26,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -51,6 +53,8 @@ class TroubleServiceTest {
     private AIAnalysisService aiAnalysisService;
     @Mock
     private AIAnalysisRepository aiAnalysisRepository;
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     private TroubleService troubleService;
 
@@ -62,7 +66,8 @@ class TroubleServiceTest {
                 troubleTagRepository,
                 aiAnalysisService,
                 aiAnalysisRepository,
-                new ObjectMapper()
+                new ObjectMapper(),
+                eventPublisher
         );
     }
 
@@ -146,13 +151,7 @@ class TroubleServiceTest {
         assertThat(trouble.getRawLog()).isEqualTo("수정 로그");
         verify(troubleTagRepository).deleteAll(List.of(existingTag));
         verify(tagRepository).findByName("Spring");
-        verify(aiAnalysisService).analyzeAndSave(
-                trouble,
-                "수정 제목",
-                "수정 설명",
-                "수정 로그",
-                List.of("Spring")
-        );
+        verify(eventPublisher).publishEvent(new AIAnalysisRequestedEvent(1L));
     }
 
     @Test

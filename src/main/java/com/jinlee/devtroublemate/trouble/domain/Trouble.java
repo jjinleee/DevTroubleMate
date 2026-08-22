@@ -108,6 +108,12 @@ public class Trouble extends BaseEntity{
         this.aiProcessedAt = LocalDateTime.now();
     }
 
+    public void resetAIProcessing() {
+        this.aiProcessingStatus = AIProcessingStatus.PENDING;
+        this.aiLastErrorCode = null;
+        this.aiLastErrorMessage = null;
+    }
+
     public AIProcessingStatus getAiProcessingStatus() {
         return aiProcessingStatus == null ? AIProcessingStatus.PENDING : aiProcessingStatus;
     }
