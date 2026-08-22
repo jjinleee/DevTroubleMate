@@ -13,6 +13,7 @@ public interface TroubleEmbeddingRepository
         extends JpaRepository<TroubleEmbedding, Long> {
 
     Optional<TroubleEmbedding> findByTrouble(Trouble trouble);
+    boolean existsByTrouble(Trouble trouble);
 
     @Query(value = """
         SELECT
@@ -29,11 +30,14 @@ public interface TroubleEmbeddingRepository
             WHERE trouble_id = :troubleId
         ) target
         WHERE te.trouble_id <> :troubleId
+          AND t.archived_at IS NULL
+          AND 1 - (te.embedding <=> target.embedding) >= :minSimilarity
         ORDER BY te.embedding <=> target.embedding
         LIMIT :limit
         """, nativeQuery = true)
     List<Object[]> findSimilarTroubles(
             @Param("troubleId") Long troubleId,
-            @Param("limit") int limit
+            @Param("limit") int limit,
+            @Param("minSimilarity") double minSimilarity
     );
 }

@@ -6,6 +6,8 @@ import com.jinlee.devtroublemate.ai.exception.AIRetryNotAllowedException;
 import com.jinlee.devtroublemate.trouble.exception.TroubleNotFoundException;
 import com.jinlee.devtroublemate.retrospective.exception.RetrospectiveAlreadyExistsException;
 import com.jinlee.devtroublemate.retrospective.exception.RetrospectiveNotFoundException;
+import com.jinlee.devtroublemate.embedding.exception.TroubleEmbeddingNotFoundException;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -84,6 +86,32 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(status)
                 .body(response);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintViolationException(
+            ConstraintViolationException exception
+    ) {
+        String message = exception.getConstraintViolations().stream()
+                .findFirst()
+                .map(violation -> violation.getMessage())
+                .orElse("요청 값이 올바르지 않습니다.");
+        return ResponseEntity.badRequest().body(ErrorResponse.of(
+                HttpStatus.BAD_REQUEST.value(),
+                "VALIDATION_ERROR",
+                message
+        ));
+    }
+
+    @ExceptionHandler(TroubleEmbeddingNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleTroubleEmbeddingNotFoundException(
+            TroubleEmbeddingNotFoundException exception
+    ) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.of(
+                HttpStatus.NOT_FOUND.value(),
+                "TROUBLE_EMBEDDING_NOT_FOUND",
+                exception.getMessage()
+        ));
     }
 
     @ExceptionHandler(RetrospectiveNotFoundException.class)
