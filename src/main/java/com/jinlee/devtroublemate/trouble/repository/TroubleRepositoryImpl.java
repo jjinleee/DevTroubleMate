@@ -4,6 +4,7 @@ import com.jinlee.devtroublemate.trouble.domain.Trouble;
 import com.jinlee.devtroublemate.trouble.domain.TroubleStatus;
 import com.jinlee.devtroublemate.trouble.dto.TroubleSearchCondition;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -24,13 +25,10 @@ public class TroubleRepositoryImpl implements TroubleRepositoryCustom {
     @Override
     public Page<Trouble> search(TroubleSearchCondition condition, Pageable pageable) {
         List<Trouble> content = queryFactory
-                .selectDistinct(trouble)
-                .from(trouble)
-                .leftJoin(troubleTag).on(troubleTag.trouble.eq(trouble))
-                .leftJoin(troubleTag.tag, tag)
+                .selectFrom(trouble)
                 .where(
                         statusEq(condition.status()),
-                        tagEq(condition.tag()),
+                        tagExists(condition.tag()),
                         keywordContains(condition.keyword()),
                         archivedEq(condition.archived())
                 )
@@ -40,13 +38,11 @@ public class TroubleRepositoryImpl implements TroubleRepositoryCustom {
                 .fetch();
 
         var countQuery = queryFactory
-                .select(trouble.id.countDistinct())
+                .select(trouble.id.count())
                 .from(trouble)
-                .leftJoin(troubleTag).on(troubleTag.trouble.eq(trouble))
-                .leftJoin(troubleTag.tag, tag)
                 .where(
                         statusEq(condition.status()),
-                        tagEq(condition.tag()),
+                        tagExists(condition.tag()),
                         keywordContains(condition.keyword()),
                         archivedEq(condition.archived())
                 );
@@ -66,12 +62,20 @@ public class TroubleRepositoryImpl implements TroubleRepositoryCustom {
         return trouble.status.eq(TroubleStatus.valueOf(status));
     }
 
-    private BooleanExpression tagEq(String tagName) {
+    private BooleanExpression tagExists(String tagName) {
         if (tagName == null || tagName.isBlank()) {
             return null;
         }
 
-        return tag.name.eq(tagName);
+        return JPAExpressions
+                .selectOne()
+                .from(troubleTag)
+                .join(troubleTag.tag, tag)
+                .where(
+                        troubleTag.trouble.eq(trouble),
+                        tag.name.eq(tagName)
+                )
+                .exists();
     }
 
     private BooleanExpression keywordContains(String keyword) {
