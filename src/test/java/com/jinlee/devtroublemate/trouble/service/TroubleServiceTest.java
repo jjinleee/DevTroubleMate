@@ -3,6 +3,8 @@ package com.jinlee.devtroublemate.trouble.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jinlee.devtroublemate.ai.repository.AIAnalysisRepository;
 import com.jinlee.devtroublemate.ai.service.AIAnalysisService;
+import com.jinlee.devtroublemate.ai.domain.AIProcessingStatus;
+import com.jinlee.devtroublemate.ai.exception.AIRetryNotAllowedException;
 import com.jinlee.devtroublemate.common.dto.PageResponse;
 import com.jinlee.devtroublemate.tag.repository.TagRepository;
 import com.jinlee.devtroublemate.tag.repository.TroubleTagRepository;
@@ -34,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doAnswer;
 
 @ExtendWith(MockitoExtension.class)
 class TroubleServiceTest {
@@ -88,6 +91,34 @@ class TroubleServiceTest {
         assertThatThrownBy(() -> troubleService.getDetail(999L))
                 .isInstanceOf(TroubleNotFoundException.class)
                 .hasMessageContaining("troubleId=999");
+    }
+
+    @Test
+    void retryFailedAIAnalysis() {
+        Trouble trouble = trouble(1L);
+        trouble.failAIProcessing("OPENAI_TIMEOUT", "시간 초과");
+        when(troubleRepository.findById(1L)).thenReturn(Optional.of(trouble));
+        when(troubleTagRepository.findAllByTrouble(trouble)).thenReturn(List.of());
+        doAnswer(invocation -> {
+            trouble.startAIProcessing();
+            trouble.completeAIProcessing();
+            return null;
+        }).when(aiAnalysisService).analyzeAndSave(trouble, "JWT 오류", "로그인 실패", "ERROR 401", List.of());
+
+        var response = troubleService.retryAIAnalysis(1L);
+
+        assertThat(response.status()).isEqualTo("COMPLETED");
+        assertThat(response.lastErrorCode()).isNull();
+        assertThat(trouble.getAiProcessingStatus()).isEqualTo(AIProcessingStatus.COMPLETED);
+    }
+
+    @Test
+    void rejectRetryWhenAnalysisHasNotFailed() {
+        Trouble trouble = trouble(1L);
+        when(troubleRepository.findById(1L)).thenReturn(Optional.of(trouble));
+
+        assertThatThrownBy(() -> troubleService.retryAIAnalysis(1L))
+                .isInstanceOf(AIRetryNotAllowedException.class);
     }
 
     @Test

@@ -2,6 +2,10 @@ package com.jinlee.devtroublemate.trouble.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jinlee.devtroublemate.ai.dto.AIAnalysisSummaryResponse;
+import com.jinlee.devtroublemate.ai.dto.AIProcessingResponse;
+import com.jinlee.devtroublemate.ai.domain.AIProcessingStatus;
+import com.jinlee.devtroublemate.ai.exception.AIRetryNotAllowedException;
+import com.jinlee.devtroublemate.ai.exception.AIServiceException;
 import com.jinlee.devtroublemate.ai.repository.AIAnalysisRepository;
 import com.jinlee.devtroublemate.ai.service.AIAnalysisService;
 import com.jinlee.devtroublemate.common.dto.PageResponse;
@@ -48,13 +52,7 @@ public class TroubleService {
         Trouble saved = troubleRepository.save(trouble);
 
         saveTags(saved, request.tags());
-        aiAnalysisService.analyzeAndSave(
-                saved,
-                request.title(),
-                request.description(),
-                request.rawLog(),
-                request.tags()
-        );
+        tryAnalyze(saved, request.title(), request.description(), request.rawLog(), request.tags());
 
         return new CreateTroubleResponse(saved.getId());
     }
@@ -73,7 +71,7 @@ public class TroubleService {
         troubleTagRepository.deleteAll(existingTags);
         saveTags(trouble, request.tags());
 
-        aiAnalysisService.analyzeAndSave(
+        tryAnalyze(
                 trouble,
                 request.title(),
                 request.description(),
@@ -112,7 +110,11 @@ public class TroubleService {
                 trouble.getReferenceLink(),
                 tags,
                 aiAnalysis,
-                trouble.getArchivedAt()
+                trouble.getArchivedAt(),
+                trouble.getAiProcessingStatus().name(),
+                trouble.getAiLastErrorCode(),
+                trouble.getAiLastErrorMessage(),
+                trouble.getAiProcessedAt()
         );
     }
 
@@ -187,6 +189,40 @@ public class TroubleService {
                 .map(String::trim)
                 .distinct()
                 .toList();
+    }
+
+    public AIProcessingResponse retryAIAnalysis(Long troubleId) {
+        Trouble trouble = troubleRepository.findById(troubleId)
+                .orElseThrow(() -> new TroubleNotFoundException(troubleId));
+        if (trouble.getAiProcessingStatus() != AIProcessingStatus.FAILED) {
+            throw new AIRetryNotAllowedException(troubleId);
+        }
+
+        List<String> tags = troubleTagRepository.findAllByTrouble(trouble).stream()
+                .map(troubleTag -> troubleTag.getTag().getName())
+                .toList();
+        tryAnalyze(
+                trouble,
+                trouble.getTitle(),
+                trouble.getDescription(),
+                trouble.getRawLog(),
+                tags
+        );
+        return AIProcessingResponse.from(trouble);
+    }
+
+    private void tryAnalyze(
+            Trouble trouble,
+            String title,
+            String description,
+            String rawLog,
+            List<String> tags
+    ) {
+        try {
+            aiAnalysisService.analyzeAndSave(trouble, title, description, rawLog, tags);
+        } catch (AIServiceException ignored) {
+            // 장애 데이터와 AI 실패 상태는 유지하고 재시도 API를 통해 복구한다.
+        }
     }
 
     public void resolve(

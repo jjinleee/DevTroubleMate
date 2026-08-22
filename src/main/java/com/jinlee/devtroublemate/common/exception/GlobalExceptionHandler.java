@@ -1,6 +1,8 @@
 package com.jinlee.devtroublemate.common.exception;
 
 import com.jinlee.devtroublemate.ai.exception.AIServiceException;
+import com.jinlee.devtroublemate.ai.exception.AIProcessingInProgressException;
+import com.jinlee.devtroublemate.ai.exception.AIRetryNotAllowedException;
 import com.jinlee.devtroublemate.trouble.exception.TroubleNotFoundException;
 import com.jinlee.devtroublemate.retrospective.exception.RetrospectiveAlreadyExistsException;
 import com.jinlee.devtroublemate.retrospective.exception.RetrospectiveNotFoundException;
@@ -18,6 +20,28 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(exception.getStatus()).body(ErrorResponse.of(
                 exception.getStatus().value(),
                 exception.getCode(),
+                exception.getMessage()
+        ));
+    }
+
+    @ExceptionHandler(AIProcessingInProgressException.class)
+    public ResponseEntity<ErrorResponse> handleAIProcessingInProgressException(
+            AIProcessingInProgressException exception
+    ) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ErrorResponse.of(
+                HttpStatus.CONFLICT.value(),
+                "AI_PROCESSING_IN_PROGRESS",
+                exception.getMessage()
+        ));
+    }
+
+    @ExceptionHandler(AIRetryNotAllowedException.class)
+    public ResponseEntity<ErrorResponse> handleAIRetryNotAllowedException(
+            AIRetryNotAllowedException exception
+    ) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ErrorResponse.of(
+                HttpStatus.CONFLICT.value(),
+                "AI_RETRY_NOT_ALLOWED",
                 exception.getMessage()
         ));
     }

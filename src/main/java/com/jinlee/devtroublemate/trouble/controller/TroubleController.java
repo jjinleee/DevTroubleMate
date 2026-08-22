@@ -1,6 +1,7 @@
 package com.jinlee.devtroublemate.trouble.controller;
 
 import com.jinlee.devtroublemate.common.dto.PageResponse;
+import com.jinlee.devtroublemate.ai.dto.AIProcessingResponse;
 import com.jinlee.devtroublemate.embedding.dto.SimilarTroubleResponse;
 import com.jinlee.devtroublemate.embedding.service.SimilarTroubleService;
 import com.jinlee.devtroublemate.trouble.dto.*;
@@ -82,6 +83,12 @@ public class TroubleController {
     public ResponseEntity<Void> restore(@PathVariable Long troubleId) {
         troubleService.restore(troubleId);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "실패한 AI 분석 재시도")
+    @PostMapping("/{troubleId}/ai-analysis/retry")
+    public AIProcessingResponse retryAIAnalysis(@PathVariable Long troubleId) {
+        return troubleService.retryAIAnalysis(troubleId);
     }
 
     @Operation(summary = "유사 장애 검색", description = "기존 장애와 의미적으로 유사한 장애를 조회합니다.")
