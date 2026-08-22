@@ -111,7 +111,8 @@ public class TroubleService {
                 trouble.getSolution(),
                 trouble.getReferenceLink(),
                 tags,
-                aiAnalysis
+                aiAnalysis,
+                trouble.getArchivedAt()
         );
     }
 
@@ -203,5 +204,17 @@ public class TroubleService {
                 request.solution(),
                 request.referenceLink()
         );
+    }
+
+    public void archive(Long troubleId) {
+        Trouble trouble = troubleRepository.findById(troubleId)
+                .orElseThrow(() -> new TroubleNotFoundException(troubleId));
+        trouble.archive();
+    }
+
+    public void restore(Long troubleId) {
+        Trouble trouble = troubleRepository.findById(troubleId)
+                .orElseThrow(() -> new TroubleNotFoundException(troubleId));
+        trouble.restore();
     }
 }

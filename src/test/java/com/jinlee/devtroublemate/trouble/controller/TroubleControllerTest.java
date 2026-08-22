@@ -166,6 +166,28 @@ class TroubleControllerTest {
                 .andExpect(jsonPath("$.code").value("TROUBLE_NOT_FOUND"));
     }
 
+    @Test
+    void archiveTrouble() throws Exception {
+        mockMvc.perform(patch("/api/troubles/{troubleId}/archive", 1L))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void restoreTrouble() throws Exception {
+        mockMvc.perform(patch("/api/troubles/{troubleId}/restore", 1L))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void returnNotFoundWhenArchivingMissingTrouble() throws Exception {
+        doThrow(new TroubleNotFoundException(999L))
+                .when(troubleService).archive(999L);
+
+        mockMvc.perform(patch("/api/troubles/{troubleId}/archive", 999L))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("TROUBLE_NOT_FOUND"));
+    }
+
     private static Stream<Arguments> invalidCreateRequests() {
         return Stream.of(
                 Arguments.of(createRequest("", "설명", "로그", "[\"JWT\"]"), "제목은 필수입니다."),

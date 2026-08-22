@@ -206,6 +206,38 @@ class TroubleServiceTest {
                 .hasMessageContaining("troubleId=999");
     }
 
+    @Test
+    void archiveTroubleWithoutChangingResolutionStatus() {
+        Trouble trouble = trouble(1L);
+        trouble.resolve("원인", "해결", null);
+        when(troubleRepository.findById(1L)).thenReturn(Optional.of(trouble));
+
+        troubleService.archive(1L);
+
+        assertThat(trouble.getArchivedAt()).isNotNull();
+        assertThat(trouble.getStatus()).isEqualTo(TroubleStatus.RESOLVED);
+    }
+
+    @Test
+    void restoreTrouble() {
+        Trouble trouble = trouble(1L);
+        trouble.archive();
+        when(troubleRepository.findById(1L)).thenReturn(Optional.of(trouble));
+
+        troubleService.restore(1L);
+
+        assertThat(trouble.getArchivedAt()).isNull();
+    }
+
+    @Test
+    void throwExceptionWhenArchivingMissingTrouble() {
+        when(troubleRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> troubleService.archive(999L))
+                .isInstanceOf(TroubleNotFoundException.class)
+                .hasMessageContaining("troubleId=999");
+    }
+
     private Trouble trouble(Long id) {
         Trouble trouble = Trouble.builder()
                 .title("JWT 오류")

@@ -4,6 +4,7 @@ import com.jinlee.devtroublemate.ai.dto.AIAnalysisSummaryResponse;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Schema(description = "트러블 상세 조회 응답")
@@ -36,6 +37,9 @@ public record TroubleDetailResponse(
         List<String> tags,
 
         @Schema(description = "AI 장애 분석 결과")
-        AIAnalysisSummaryResponse aiAnalysis
+        AIAnalysisSummaryResponse aiAnalysis,
+
+        @Schema(description = "보관 일시", nullable = true)
+        LocalDateTime archivedAt
 ) {
 }
