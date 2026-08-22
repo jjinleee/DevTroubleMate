@@ -6,6 +6,7 @@ import com.jinlee.devtroublemate.ai.domain.AIAnalysis;
 import com.jinlee.devtroublemate.ai.dto.AIAnalysisResponse;
 import com.jinlee.devtroublemate.ai.dto.AnalyzeTroubleLogRequest;
 import com.jinlee.devtroublemate.ai.repository.AIAnalysisRepository;
+import com.jinlee.devtroublemate.ai.exception.AIServiceException;
 import com.jinlee.devtroublemate.trouble.domain.Trouble;
 import com.jinlee.devtroublemate.trouble.exception.TroubleNotFoundException;
 import com.jinlee.devtroublemate.trouble.repository.TroubleRepository;
@@ -89,7 +90,7 @@ public class AIAnalysisService {
         try {
             return objectMapper.writeValueAsString(value);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("AI 분석 결과 JSON 변환 실패", e);
+            throw AIServiceException.responseProcessingFailed(e);
         }
     }
 }

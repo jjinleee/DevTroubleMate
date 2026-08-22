@@ -1,6 +1,7 @@
 package com.jinlee.devtroublemate.embedding.service;
 
 import com.jinlee.devtroublemate.ai.dto.AIAnalysisResponse;
+import com.jinlee.devtroublemate.ai.exception.AIExceptionTranslator;
 import com.jinlee.devtroublemate.embedding.domain.TroubleEmbedding;
 import com.jinlee.devtroublemate.embedding.repository.TroubleEmbeddingRepository;
 import com.jinlee.devtroublemate.trouble.domain.Trouble;
@@ -25,7 +26,12 @@ public class EmbeddingService {
     ) {
         String inputText = createInputText(trouble, aiAnalysisResponse);
 
-        float[] embedding = embeddingModel.embed(inputText);
+        float[] embedding;
+        try {
+            embedding = embeddingModel.embed(inputText);
+        } catch (RuntimeException exception) {
+            throw AIExceptionTranslator.forEmbedding(exception);
+        }
 
         TroubleEmbedding troubleEmbedding = troubleEmbeddingRepository
                 .findByTrouble(trouble)

@@ -2,6 +2,7 @@ package com.jinlee.devtroublemate.trouble.controller;
 
 import com.jinlee.devtroublemate.common.exception.GlobalExceptionHandler;
 import com.jinlee.devtroublemate.common.dto.PageResponse;
+import com.jinlee.devtroublemate.ai.exception.AIServiceException;
 import com.jinlee.devtroublemate.embedding.service.SimilarTroubleService;
 import com.jinlee.devtroublemate.trouble.dto.CreateTroubleResponse;
 import com.jinlee.devtroublemate.trouble.exception.TroubleNotFoundException;
@@ -60,6 +61,27 @@ class TroubleControllerTest {
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1));
+    }
+
+    @Test
+    void returnStandardErrorWhenAIRateLimited() throws Exception {
+        when(troubleService.create(any()))
+                .thenThrow(AIServiceException.rateLimited(new RuntimeException()));
+
+        mockMvc.perform(post("/api/troubles")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "title": "JWT 오류",
+                                  "description": "로그인 실패",
+                                  "rawLog": "ERROR 401",
+                                  "tags": ["JWT"]
+                                }
+                                """))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.status").value(503))
+                .andExpect(jsonPath("$.code").value("OPENAI_RATE_LIMITED"))
+                .andExpect(jsonPath("$.message").value("AI 서비스 요청이 많습니다. 잠시 후 다시 시도해 주세요."));
     }
 
     @ParameterizedTest
