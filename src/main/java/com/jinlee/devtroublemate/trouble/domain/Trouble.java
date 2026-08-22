@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import com.jinlee.devtroublemate.global.domain.BaseEntity;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -33,6 +35,7 @@ public class Trouble extends BaseEntity{
     @Column(columnDefinition = "TEXT")
     private String solution;
     private String referenceLink;
+    private LocalDateTime archivedAt;
 
     @Builder
     public Trouble(String title, String description, String rawLog) {
@@ -61,6 +64,16 @@ public class Trouble extends BaseEntity{
         this.title = title;
         this.description = description;
         this.rawLog = rawLog;
+    }
+
+    public void archive() {
+        if (this.archivedAt == null) {
+            this.archivedAt = LocalDateTime.now();
+        }
+    }
+
+    public void restore() {
+        this.archivedAt = null;
     }
 
 }

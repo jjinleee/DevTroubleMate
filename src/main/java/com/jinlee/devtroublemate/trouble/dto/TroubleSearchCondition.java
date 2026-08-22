@@ -11,6 +11,13 @@ public record TroubleSearchCondition(
         String tag,
 
         @Schema(description = "키워드 (제목/설명 검색)", example = "JWT")
-        String keyword
+        String keyword,
+
+        @Schema(description = "보관된 트러블 조회 여부", example = "false", defaultValue = "false")
+        Boolean archived
 ) {
+
+    public TroubleSearchCondition(String status, String tag, String keyword) {
+        this(status, tag, keyword, false);
+    }
 }

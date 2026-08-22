@@ -31,7 +31,8 @@ public class TroubleRepositoryImpl implements TroubleRepositoryCustom {
                 .where(
                         statusEq(condition.status()),
                         tagEq(condition.tag()),
-                        keywordContains(condition.keyword())
+                        keywordContains(condition.keyword()),
+                        archivedEq(condition.archived())
                 )
                 .orderBy(trouble.createdAt.desc())
                 .offset(pageable.getOffset())
@@ -46,7 +47,8 @@ public class TroubleRepositoryImpl implements TroubleRepositoryCustom {
                 .where(
                         statusEq(condition.status()),
                         tagEq(condition.tag()),
-                        keywordContains(condition.keyword())
+                        keywordContains(condition.keyword()),
+                        archivedEq(condition.archived())
                 );
 
         return PageableExecutionUtils.getPage(
@@ -79,5 +81,11 @@ public class TroubleRepositoryImpl implements TroubleRepositoryCustom {
 
         return trouble.title.containsIgnoreCase(keyword)
                 .or(trouble.description.containsIgnoreCase(keyword));
+    }
+
+    private BooleanExpression archivedEq(Boolean archived) {
+        return Boolean.TRUE.equals(archived)
+                ? trouble.archivedAt.isNotNull()
+                : trouble.archivedAt.isNull();
     }
 }

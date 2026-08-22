@@ -70,6 +70,20 @@ public class TroubleController {
         troubleService.resolve(troubleId, request);
     }
 
+    @Operation(summary = "트러블 보관")
+    @PatchMapping("/{troubleId}/archive")
+    public ResponseEntity<Void> archive(@PathVariable Long troubleId) {
+        troubleService.archive(troubleId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "트러블 복원")
+    @PatchMapping("/{troubleId}/restore")
+    public ResponseEntity<Void> restore(@PathVariable Long troubleId) {
+        troubleService.restore(troubleId);
+        return ResponseEntity.noContent().build();
+    }
+
     @Operation(summary = "유사 장애 검색", description = "기존 장애와 의미적으로 유사한 장애를 조회합니다.")
     @GetMapping("/{troubleId}/similar")
     public ResponseEntity<List<SimilarTroubleResponse>> findSimilarTroubles(
