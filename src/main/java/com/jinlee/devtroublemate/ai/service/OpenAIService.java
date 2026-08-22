@@ -3,6 +3,8 @@ package com.jinlee.devtroublemate.ai.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jinlee.devtroublemate.ai.dto.AIAnalysisResponse;
+import com.jinlee.devtroublemate.ai.exception.AIExceptionTranslator;
+import com.jinlee.devtroublemate.ai.exception.AIServiceException;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 
@@ -30,16 +32,42 @@ public class OpenAIService {
     ) {
         String prompt = createTroubleAnalysisPrompt(title, description, rawLog, tags);
 
-        String result = chatClient.prompt()
-                .user(prompt)
-                .call()
-                .content();
+        String result;
+        try {
+            result = chatClient.prompt()
+                    .user(prompt)
+                    .call()
+                    .content();
+        } catch (RuntimeException exception) {
+            throw AIExceptionTranslator.forAnalysis(exception);
+        }
 
         try {
-            return objectMapper.readValue(result, AIAnalysisResponse.class);
+            AIAnalysisResponse response = objectMapper.readValue(result, AIAnalysisResponse.class);
+            validate(response);
+            return response;
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("AI 응답 파싱 실패", e);
+            throw AIServiceException.invalidResponse(e);
         }
+    }
+
+    private void validate(AIAnalysisResponse response) {
+        if (response == null
+                || isBlank(response.category())
+                || isBlank(response.summary())
+                || response.possibleCauses() == null
+                || response.possibleCauses().isEmpty()
+                || response.runbook() == null
+                || response.runbook().isEmpty()
+                || response.confidence() == null
+                || response.confidence() < 0
+                || response.confidence() > 100) {
+            throw AIServiceException.invalidResponse(null);
+        }
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 
     private String createTroubleAnalysisPrompt(

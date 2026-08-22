@@ -1,5 +1,6 @@
 package com.jinlee.devtroublemate.common.exception;
 
+import com.jinlee.devtroublemate.ai.exception.AIServiceException;
 import com.jinlee.devtroublemate.trouble.exception.TroubleNotFoundException;
 import com.jinlee.devtroublemate.retrospective.exception.RetrospectiveAlreadyExistsException;
 import com.jinlee.devtroublemate.retrospective.exception.RetrospectiveNotFoundException;
@@ -11,6 +12,15 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(AIServiceException.class)
+    public ResponseEntity<ErrorResponse> handleAIServiceException(AIServiceException exception) {
+        return ResponseEntity.status(exception.getStatus()).body(ErrorResponse.of(
+                exception.getStatus().value(),
+                exception.getCode(),
+                exception.getMessage()
+        ));
+    }
 
     @ExceptionHandler(TroubleNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleTroubleNotFoundException(
