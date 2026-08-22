@@ -1,6 +1,8 @@
 package com.jinlee.devtroublemate.common.exception;
 
 import com.jinlee.devtroublemate.trouble.exception.TroubleNotFoundException;
+import com.jinlee.devtroublemate.retrospective.exception.RetrospectiveAlreadyExistsException;
+import com.jinlee.devtroublemate.retrospective.exception.RetrospectiveNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -48,5 +50,27 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(status)
                 .body(response);
+    }
+
+    @ExceptionHandler(RetrospectiveNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleRetrospectiveNotFoundException(
+            RetrospectiveNotFoundException exception
+    ) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.of(
+                HttpStatus.NOT_FOUND.value(),
+                "RETROSPECTIVE_NOT_FOUND",
+                exception.getMessage()
+        ));
+    }
+
+    @ExceptionHandler(RetrospectiveAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleRetrospectiveAlreadyExistsException(
+            RetrospectiveAlreadyExistsException exception
+    ) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ErrorResponse.of(
+                HttpStatus.CONFLICT.value(),
+                "RETROSPECTIVE_ALREADY_EXISTS",
+                exception.getMessage()
+        ));
     }
 }

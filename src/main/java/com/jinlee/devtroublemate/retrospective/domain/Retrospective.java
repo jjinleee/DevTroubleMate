@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Builder;
 
 @Entity
 @Getter
@@ -25,4 +26,16 @@ public class Retrospective extends BaseEntity {
 
     @Column(columnDefinition = "TEXT")
     private String lesson;
+
+    @Builder
+    public Retrospective(Trouble trouble, String content, String lesson) {
+        this.trouble = trouble;
+        this.content = content;
+        this.lesson = lesson;
+    }
+
+    public void update(String content, String lesson) {
+        this.content = content;
+        this.lesson = lesson;
+    }
 }
