@@ -1,5 +1,6 @@
 package com.jinlee.devtroublemate.trouble.domain;
 
+import com.jinlee.devtroublemate.ai.domain.AIProcessingStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -37,12 +38,23 @@ public class Trouble extends BaseEntity{
     private String referenceLink;
     private LocalDateTime archivedAt;
 
+    @Enumerated(EnumType.STRING)
+    private AIProcessingStatus aiProcessingStatus = AIProcessingStatus.PENDING;
+
+    private String aiLastErrorCode;
+
+    @Column(columnDefinition = "TEXT")
+    private String aiLastErrorMessage;
+
+    private LocalDateTime aiProcessedAt;
+
     @Builder
     public Trouble(String title, String description, String rawLog) {
         this.title = title;
         this.description = description;
         this.rawLog = rawLog;
         this.status = TroubleStatus.OPEN;
+        this.aiProcessingStatus = AIProcessingStatus.PENDING;
     }
 
     public void resolve(
@@ -74,6 +86,30 @@ public class Trouble extends BaseEntity{
 
     public void restore() {
         this.archivedAt = null;
+    }
+
+    public void startAIProcessing() {
+        this.aiProcessingStatus = AIProcessingStatus.PROCESSING;
+        this.aiLastErrorCode = null;
+        this.aiLastErrorMessage = null;
+    }
+
+    public void completeAIProcessing() {
+        this.aiProcessingStatus = AIProcessingStatus.COMPLETED;
+        this.aiLastErrorCode = null;
+        this.aiLastErrorMessage = null;
+        this.aiProcessedAt = LocalDateTime.now();
+    }
+
+    public void failAIProcessing(String errorCode, String errorMessage) {
+        this.aiProcessingStatus = AIProcessingStatus.FAILED;
+        this.aiLastErrorCode = errorCode;
+        this.aiLastErrorMessage = errorMessage;
+        this.aiProcessedAt = LocalDateTime.now();
+    }
+
+    public AIProcessingStatus getAiProcessingStatus() {
+        return aiProcessingStatus == null ? AIProcessingStatus.PENDING : aiProcessingStatus;
     }
 
 }

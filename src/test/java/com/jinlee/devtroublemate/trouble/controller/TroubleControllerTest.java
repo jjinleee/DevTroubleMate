@@ -3,6 +3,8 @@ package com.jinlee.devtroublemate.trouble.controller;
 import com.jinlee.devtroublemate.common.exception.GlobalExceptionHandler;
 import com.jinlee.devtroublemate.common.dto.PageResponse;
 import com.jinlee.devtroublemate.ai.exception.AIServiceException;
+import com.jinlee.devtroublemate.ai.dto.AIProcessingResponse;
+import com.jinlee.devtroublemate.ai.exception.AIRetryNotAllowedException;
 import com.jinlee.devtroublemate.embedding.service.SimilarTroubleService;
 import com.jinlee.devtroublemate.trouble.dto.CreateTroubleResponse;
 import com.jinlee.devtroublemate.trouble.exception.TroubleNotFoundException;
@@ -20,6 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.stream.Stream;
 import java.util.List;
+import java.time.LocalDateTime;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
@@ -82,6 +85,25 @@ class TroubleControllerTest {
                 .andExpect(jsonPath("$.status").value(503))
                 .andExpect(jsonPath("$.code").value("OPENAI_RATE_LIMITED"))
                 .andExpect(jsonPath("$.message").value("AI 서비스 요청이 많습니다. 잠시 후 다시 시도해 주세요."));
+    }
+
+    @Test
+    void retryFailedAIAnalysis() throws Exception {
+        when(troubleService.retryAIAnalysis(1L)).thenReturn(new AIProcessingResponse(
+                1L, "COMPLETED", null, null, LocalDateTime.now()));
+
+        mockMvc.perform(post("/api/troubles/{troubleId}/ai-analysis/retry", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("COMPLETED"));
+    }
+
+    @Test
+    void rejectRetryWhenAnalysisHasNotFailed() throws Exception {
+        when(troubleService.retryAIAnalysis(1L)).thenThrow(new AIRetryNotAllowedException(1L));
+
+        mockMvc.perform(post("/api/troubles/{troubleId}/ai-analysis/retry", 1L))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("AI_RETRY_NOT_ALLOWED"));
     }
 
     @ParameterizedTest

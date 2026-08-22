@@ -40,6 +40,18 @@ public record TroubleDetailResponse(
         AIAnalysisSummaryResponse aiAnalysis,
 
         @Schema(description = "보관 일시", nullable = true)
-        LocalDateTime archivedAt
+        LocalDateTime archivedAt,
+
+        @Schema(description = "AI 처리 상태", example = "COMPLETED")
+        String aiProcessingStatus,
+
+        @Schema(description = "마지막 AI 오류 코드", nullable = true)
+        String aiLastErrorCode,
+
+        @Schema(description = "마지막 AI 오류 메시지", nullable = true)
+        String aiLastErrorMessage,
+
+        @Schema(description = "마지막 AI 처리 완료 시각", nullable = true)
+        LocalDateTime aiProcessedAt
 ) {
 }
