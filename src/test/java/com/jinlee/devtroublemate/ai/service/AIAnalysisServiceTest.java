@@ -98,6 +98,8 @@ class AIAnalysisServiceTest {
         assertThat(existing.getPossibleCauses()).isEqualTo("[\"만료 설정 오류\"]");
         assertThat(existing.getRunbook()).isEqualTo("[\"설정 확인\"]");
         assertThat(existing.getConfidence()).isEqualTo(95);
+        assertThat(existing.getModelName()).isEqualTo("gpt-4o-mini");
+        assertThat(existing.getPromptVersion()).isEqualTo("trouble-analysis-v1");
         assertThat(trouble.getAiProcessingStatus()).isEqualTo(AIProcessingStatus.COMPLETED);
         assertThat(trouble.getAiProcessedAt()).isNotNull();
         verify(aiAnalysisRepository).save(existing);

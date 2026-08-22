@@ -12,7 +12,9 @@ public record AIAnalysisSummaryResponse(
         String summary,
         List<String> possibleCauses,
         List<String> runbook,
-        Integer confidence
+        Integer confidence,
+        String modelName,
+        String promptVersion
 ) {
 
     public static AIAnalysisSummaryResponse from(
@@ -24,7 +26,9 @@ public record AIAnalysisSummaryResponse(
                 aiAnalysis.getSummary(),
                 toList(aiAnalysis.getPossibleCauses(), objectMapper),
                 toList(aiAnalysis.getRunbook(), objectMapper),
-                aiAnalysis.getConfidence()
+                aiAnalysis.getConfidence(),
+                aiAnalysis.getModelName(),
+                aiAnalysis.getPromptVersion()
         );
     }
 
