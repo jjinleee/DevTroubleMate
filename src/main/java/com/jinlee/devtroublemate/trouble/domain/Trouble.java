@@ -39,6 +39,7 @@ public class Trouble extends BaseEntity{
     private LocalDateTime archivedAt;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private AIProcessingStatus aiProcessingStatus = AIProcessingStatus.PENDING;
 
     private String aiLastErrorCode;
