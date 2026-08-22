@@ -12,13 +12,19 @@ import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 
 @RestController
+@Validated
 @RequiredArgsConstructor
 @RequestMapping("/api/troubles")
 @Tag(name = "Trouble", description = "트러블 CRUD API")
@@ -95,11 +101,18 @@ public class TroubleController {
     @GetMapping("/{troubleId}/similar")
     public ResponseEntity<List<SimilarTroubleResponse>> findSimilarTroubles(
             @PathVariable Long troubleId,
-            @RequestParam(defaultValue = "5") int limit
+            @RequestParam(defaultValue = "5")
+            @Min(value = 1, message = "limit은 1 이상이어야 합니다.")
+            @Max(value = 20, message = "limit은 20 이하여야 합니다.")
+            int limit,
+            @RequestParam(defaultValue = "0.0")
+            @DecimalMin(value = "0.0", message = "minSimilarity는 0.0 이상이어야 합니다.")
+            @DecimalMax(value = "1.0", message = "minSimilarity는 1.0 이하여야 합니다.")
+            double minSimilarity
     ) {
 
         return ResponseEntity.ok(
-                similarTroubleService.findSimilarTroubles(troubleId, limit)
+                similarTroubleService.findSimilarTroubles(troubleId, limit, minSimilarity)
         );
     }
 }

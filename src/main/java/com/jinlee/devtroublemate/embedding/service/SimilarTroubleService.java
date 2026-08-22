@@ -2,6 +2,7 @@ package com.jinlee.devtroublemate.embedding.service;
 
 import com.jinlee.devtroublemate.embedding.dto.SimilarTroubleResponse;
 import com.jinlee.devtroublemate.embedding.repository.TroubleEmbeddingRepository;
+import com.jinlee.devtroublemate.embedding.exception.TroubleEmbeddingNotFoundException;
 import com.jinlee.devtroublemate.trouble.domain.Trouble;
 import com.jinlee.devtroublemate.trouble.exception.TroubleNotFoundException;
 import com.jinlee.devtroublemate.trouble.repository.TroubleRepository;
@@ -17,15 +18,23 @@ public class SimilarTroubleService {
     private final TroubleRepository troubleRepository;
     private final TroubleEmbeddingRepository troubleEmbeddingRepository;
 
-    public List<SimilarTroubleResponse> findSimilarTroubles(Long troubleId, int limit) {
+    public List<SimilarTroubleResponse> findSimilarTroubles(
+            Long troubleId,
+            int limit,
+            double minSimilarity
+    ) {
 
         Trouble trouble = troubleRepository.findById(troubleId)
                 .orElseThrow(() -> new TroubleNotFoundException(troubleId));
+        if (!troubleEmbeddingRepository.existsByTrouble(trouble)) {
+            throw new TroubleEmbeddingNotFoundException(troubleId);
+        }
 
         List<Object[]> results =
                 troubleEmbeddingRepository.findSimilarTroubles(
                         trouble.getId(),
-                        limit
+                        limit,
+                        minSimilarity
                 );
 
         return results.stream()

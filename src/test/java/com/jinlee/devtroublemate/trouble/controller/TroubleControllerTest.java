@@ -5,6 +5,7 @@ import com.jinlee.devtroublemate.common.dto.PageResponse;
 import com.jinlee.devtroublemate.ai.exception.AIServiceException;
 import com.jinlee.devtroublemate.ai.dto.AIProcessingResponse;
 import com.jinlee.devtroublemate.ai.exception.AIRetryNotAllowedException;
+import com.jinlee.devtroublemate.embedding.exception.TroubleEmbeddingNotFoundException;
 import com.jinlee.devtroublemate.embedding.service.SimilarTroubleService;
 import com.jinlee.devtroublemate.trouble.dto.CreateTroubleResponse;
 import com.jinlee.devtroublemate.trouble.exception.TroubleNotFoundException;
@@ -178,6 +179,25 @@ class TroubleControllerTest {
                 .andExpect(jsonPath("$.totalElements").value(12))
                 .andExpect(jsonPath("$.totalPages").value(3))
                 .andExpect(jsonPath("$.last").value(false));
+    }
+
+    @Test
+    void rejectInvalidSimilarSearchParameters() throws Exception {
+        mockMvc.perform(get("/api/troubles/{troubleId}/similar", 1L)
+                        .param("limit", "0")
+                        .param("minSimilarity", "1.1"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+    }
+
+    @Test
+    void returnNotFoundWhenEmbeddingDoesNotExist() throws Exception {
+        when(similarTroubleService.findSimilarTroubles(1L, 5, 0.0))
+                .thenThrow(new TroubleEmbeddingNotFoundException(1L));
+
+        mockMvc.perform(get("/api/troubles/{troubleId}/similar", 1L))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("TROUBLE_EMBEDDING_NOT_FOUND"));
     }
 
     @ParameterizedTest
