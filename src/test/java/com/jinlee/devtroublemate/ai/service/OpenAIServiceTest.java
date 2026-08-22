@@ -67,6 +67,23 @@ class OpenAIServiceTest {
     }
 
     @Test
+    void rejectTooManyOrBlankItems() {
+        when(chatClient.prompt().user(anyString()).call().content()).thenReturn("""
+                {
+                  "category":"인증",
+                  "summary":"요약",
+                  "possibleCauses":["원인1","원인2","원인3","원인4"],
+                  "runbook":["점검1"," "],
+                  "confidence":80
+                }
+                """);
+
+        assertThatThrownBy(() -> openAIService.analyzeTroubleLog("제목", "설명", "로그", List.of()))
+                .isInstanceOfSatisfying(AIServiceException.class, exception ->
+                        assertThat(exception.getCode()).isEqualTo("AI_RESPONSE_INVALID"));
+    }
+
+    @Test
     void translateGeneralCallFailure() {
         when(chatClient.prompt().user(anyString()).call().content())
                 .thenThrow(new RuntimeException("provider failure"));

@@ -14,6 +14,7 @@ import com.jinlee.devtroublemate.trouble.exception.TroubleNotFoundException;
 import com.jinlee.devtroublemate.trouble.repository.TroubleRepository;
 import com.jinlee.devtroublemate.embedding.service.EmbeddingService;
 import com.jinlee.devtroublemate.tag.repository.TroubleTagRepository;
+import com.jinlee.devtroublemate.ai.prompt.TroubleAnalysisPrompt;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -62,7 +63,9 @@ public class AIAnalysisService {
                                 response.summary(),
                                 possibleCauses,
                                 runbook,
-                                response.confidence()
+                                response.confidence(),
+                                TroubleAnalysisPrompt.MODEL_NAME,
+                                TroubleAnalysisPrompt.VERSION
                         );
                         return existing;
                     })
@@ -73,6 +76,8 @@ public class AIAnalysisService {
                             .possibleCauses(possibleCauses)
                             .runbook(runbook)
                             .confidence(response.confidence())
+                            .modelName(TroubleAnalysisPrompt.MODEL_NAME)
+                            .promptVersion(TroubleAnalysisPrompt.VERSION)
                             .build());
 
             aiAnalysisRepository.save(aiAnalysis);
