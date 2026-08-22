@@ -58,8 +58,11 @@ class SimilarTroubleServiceTest {
         Trouble trouble = Trouble.builder().title("제목").description("설명").rawLog("로그").build();
         when(troubleRepository.findById(1L)).thenReturn(Optional.of(trouble));
         when(troubleEmbeddingRepository.existsByTrouble(trouble)).thenReturn(true);
-        when(troubleEmbeddingRepository.findSimilarTroubles(null, 3, 0.8))
-                .thenReturn(List.<Object[]>of(new Object[]{2L, "유사 장애", "RESOLVED", 0.91}));
+        when(troubleEmbeddingRepository.findSimilarTroubles(null, 3))
+                .thenReturn(List.of(
+                        new Object[]{2L, "유사 장애", "RESOLVED", 0.91},
+                        new Object[]{3L, "기준 미달 장애", "OPEN", 0.79}
+                ));
 
         var responses = similarTroubleService.findSimilarTroubles(1L, 3, 0.8);
 

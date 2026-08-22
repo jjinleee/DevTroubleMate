@@ -33,12 +33,12 @@ public class SimilarTroubleService {
         List<Object[]> results =
                 troubleEmbeddingRepository.findSimilarTroubles(
                         trouble.getId(),
-                        limit,
-                        minSimilarity
+                        limit
                 );
 
         return results.stream()
                 .map(this::toResponse)
+                .filter(response -> response.similarity() >= minSimilarity)
                 .toList();
     }
 
