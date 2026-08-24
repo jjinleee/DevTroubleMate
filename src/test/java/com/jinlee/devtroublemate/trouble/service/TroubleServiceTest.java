@@ -118,8 +118,27 @@ class TroubleServiceTest {
     }
 
     @Test
-    void rejectRetryWhenAnalysisHasNotFailed() {
+    void retryPendingAIAnalysis() {
         Trouble trouble = trouble(1L);
+        when(troubleRepository.findById(1L)).thenReturn(Optional.of(trouble));
+        when(troubleTagRepository.findAllByTrouble(trouble)).thenReturn(List.of());
+        doAnswer(invocation -> {
+            trouble.startAIProcessing();
+            trouble.completeAIProcessing();
+            return null;
+        }).when(aiAnalysisService).analyzeAndSave(trouble, "JWT 오류", "로그인 실패", "ERROR 401", List.of());
+
+        var response = troubleService.retryAIAnalysis(1L);
+
+        assertThat(response.status()).isEqualTo("COMPLETED");
+        assertThat(trouble.getAiProcessingStatus()).isEqualTo(AIProcessingStatus.COMPLETED);
+    }
+
+    @Test
+    void rejectRetryWhenAnalysisIsCompleted() {
+        Trouble trouble = trouble(1L);
+        trouble.startAIProcessing();
+        trouble.completeAIProcessing();
         when(troubleRepository.findById(1L)).thenReturn(Optional.of(trouble));
 
         assertThatThrownBy(() -> troubleService.retryAIAnalysis(1L))

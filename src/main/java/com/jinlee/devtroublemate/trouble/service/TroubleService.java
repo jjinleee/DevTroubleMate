@@ -191,7 +191,8 @@ public class TroubleService {
     public AIProcessingResponse retryAIAnalysis(Long troubleId) {
         Trouble trouble = troubleRepository.findById(troubleId)
                 .orElseThrow(() -> new TroubleNotFoundException(troubleId));
-        if (trouble.getAiProcessingStatus() != AIProcessingStatus.FAILED) {
+        if (trouble.getAiProcessingStatus() != AIProcessingStatus.FAILED
+                && trouble.getAiProcessingStatus() != AIProcessingStatus.PENDING) {
             throw new AIRetryNotAllowedException(troubleId);
         }
 
