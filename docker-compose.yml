@@ -3,11 +3,11 @@ services:
     image: pgvector/pgvector:pg16
     container_name: devtroublemate-db
     environment:
-      POSTGRES_DB: devtroublemate
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: ${DB_NAME:-devtroublemate}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
 
