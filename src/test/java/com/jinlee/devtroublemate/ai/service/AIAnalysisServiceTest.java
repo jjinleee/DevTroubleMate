@@ -16,7 +16,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Optional;
 
@@ -129,5 +132,15 @@ class AIAnalysisServiceTest {
         assertThatThrownBy(() -> aiAnalysisService.analyzeAndSave(
                 trouble, "제목", "설명", "로그", List.of()))
                 .isInstanceOf(AIProcessingInProgressException.class);
+    }
+
+    @Test
+    void analyzeStoredTroubleUsesIndependentTransactionAndKeepsFailureStatus() throws Exception {
+        Method method = AIAnalysisService.class.getDeclaredMethod("analyzeStoredTrouble", Long.class);
+        Transactional transactional = method.getAnnotation(Transactional.class);
+
+        assertThat(transactional).isNotNull();
+        assertThat(transactional.propagation()).isEqualTo(Propagation.REQUIRES_NEW);
+        assertThat(transactional.noRollbackFor()).contains(AIServiceException.class);
     }
 }

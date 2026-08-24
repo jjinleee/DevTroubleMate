@@ -17,6 +17,7 @@ import com.jinlee.devtroublemate.tag.repository.TroubleTagRepository;
 import com.jinlee.devtroublemate.ai.prompt.TroubleAnalysisPrompt;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -93,6 +94,10 @@ public class AIAnalysisService {
         }
     }
 
+    @Transactional(
+            propagation = Propagation.REQUIRES_NEW,
+            noRollbackFor = AIServiceException.class
+    )
     public AIAnalysisResponse analyzeStoredTrouble(Long troubleId) {
         Trouble trouble = troubleRepository.findById(troubleId)
                 .orElseThrow(() -> new TroubleNotFoundException(troubleId));
