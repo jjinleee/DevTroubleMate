@@ -22,6 +22,6 @@ public record CreateTroubleRequest(
 
         @Schema(description = "태그 목록", example = "[\"JWT\", \"Spring Security\"]")
         @NotEmpty(message = "태그는 하나 이상 입력해야 합니다.")
-        List<String> tags
+        List<@NotBlank(message = "태그 이름은 공백일 수 없습니다.") String> tags
 ) {
 }

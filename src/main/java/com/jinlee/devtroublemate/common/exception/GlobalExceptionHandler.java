@@ -10,7 +10,9 @@ import com.jinlee.devtroublemate.retrospective.exception.RetrospectiveNotFoundEx
 import com.jinlee.devtroublemate.embedding.exception.TroubleEmbeddingNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -88,6 +90,24 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(status)
                 .body(response);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException() {
+        return ResponseEntity.badRequest().body(ErrorResponse.of(
+                HttpStatus.BAD_REQUEST.value(),
+                "INVALID_REQUEST_BODY",
+                "요청 본문을 읽을 수 없습니다. JSON 형식을 확인해 주세요."
+        ));
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMediaTypeNotSupportedException() {
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(ErrorResponse.of(
+                HttpStatus.UNSUPPORTED_MEDIA_TYPE.value(),
+                "UNSUPPORTED_MEDIA_TYPE",
+                "지원하지 않는 Content-Type입니다. application/json을 사용해 주세요."
+        ));
     }
 
     @ExceptionHandler(ConstraintViolationException.class)

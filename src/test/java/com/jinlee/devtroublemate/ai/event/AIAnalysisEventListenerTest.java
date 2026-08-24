@@ -33,4 +33,13 @@ class AIAnalysisEventListenerTest {
         assertThatCode(() -> listener.handle(new AIAnalysisRequestedEvent(1L)))
                 .doesNotThrowAnyException();
     }
+
+    @Test
+    void doNotPropagateUnexpectedFailureToCommittedTrouble() {
+        doThrow(new IllegalStateException("unexpected"))
+                .when(aiAnalysisService).analyzeStoredTrouble(1L);
+
+        assertThatCode(() -> listener.handle(new AIAnalysisRequestedEvent(1L)))
+                .doesNotThrowAnyException();
+    }
 }

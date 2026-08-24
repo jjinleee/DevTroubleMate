@@ -91,6 +91,11 @@ public class AIAnalysisService {
             trouble.failAIProcessing(exception.getCode(), exception.getMessage());
             troubleRepository.save(trouble);
             throw exception;
+        } catch (RuntimeException exception) {
+            AIServiceException translated = AIServiceException.analysisFailed(exception);
+            trouble.failAIProcessing(translated.getCode(), translated.getMessage());
+            troubleRepository.save(trouble);
+            throw translated;
         }
     }
 
