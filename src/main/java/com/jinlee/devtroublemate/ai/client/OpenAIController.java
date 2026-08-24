@@ -4,6 +4,7 @@ import com.jinlee.devtroublemate.ai.dto.AnalyzeTroubleLogRequest;
 import com.jinlee.devtroublemate.ai.dto.AIAnalysisResponse;
 import com.jinlee.devtroublemate.ai.service.AIAnalysisService;
 import com.jinlee.devtroublemate.ai.service.OpenAIService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,7 +18,7 @@ public class OpenAIController {
 
     @PostMapping("/analyze")
     public AIAnalysisResponse analyze(
-            @RequestBody AnalyzeTroubleLogRequest request
+            @Valid @RequestBody AnalyzeTroubleLogRequest request
     ) {
         return openAIService.analyzeTroubleLog(
                 request.title(),
@@ -29,7 +30,7 @@ public class OpenAIController {
     @PostMapping("/troubles/{troubleId}/analyze")
     public AIAnalysisResponse analyzeAndSave(
             @PathVariable Long troubleId,
-            @RequestBody AnalyzeTroubleLogRequest request
+            @Valid @RequestBody AnalyzeTroubleLogRequest request
     ) {
         return aiAnalysisService.analyzeAndSave(troubleId, request);
     }

@@ -125,6 +125,22 @@ class AIAnalysisServiceTest {
     }
 
     @Test
+    void translateUnexpectedFailureAndRecordFailureStatus() {
+        Trouble trouble = Trouble.builder().title("제목").description("설명").rawLog("로그").build();
+        when(openAIService.analyzeTroubleLog("제목", "설명", "로그", List.of("JWT")))
+                .thenThrow(new IllegalStateException("unexpected"));
+
+        assertThatThrownBy(() -> aiAnalysisService.analyzeAndSave(
+                trouble, "제목", "설명", "로그", List.of("JWT")))
+                .isInstanceOf(AIServiceException.class)
+                .hasMessage("AI 장애 분석에 실패했습니다.");
+
+        assertThat(trouble.getAiProcessingStatus()).isEqualTo(AIProcessingStatus.FAILED);
+        assertThat(trouble.getAiLastErrorCode()).isEqualTo("AI_ANALYSIS_FAILED");
+        assertThat(trouble.getAiProcessedAt()).isNotNull();
+    }
+
+    @Test
     void rejectDuplicateProcessing() {
         Trouble trouble = Trouble.builder().title("제목").description("설명").rawLog("로그").build();
         trouble.startAIProcessing();

@@ -156,6 +156,29 @@ class TroubleControllerTest {
     }
 
     @Test
+    void returnStandardErrorForMalformedJson() throws Exception {
+        mockMvc.perform(post("/api/troubles")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.timestamp").exists())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.code").value("INVALID_REQUEST_BODY"))
+                .andExpect(jsonPath("$.message").value("요청 본문을 읽을 수 없습니다. JSON 형식을 확인해 주세요."));
+    }
+
+    @Test
+    void returnStandardErrorForUnsupportedMediaType() throws Exception {
+        mockMvc.perform(post("/api/troubles")
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .content("invalid"))
+                .andExpect(status().isUnsupportedMediaType())
+                .andExpect(jsonPath("$.timestamp").exists())
+                .andExpect(jsonPath("$.status").value(415))
+                .andExpect(jsonPath("$.code").value("UNSUPPORTED_MEDIA_TYPE"));
+    }
+
+    @Test
     void returnNotFoundWhenUpdatingMissingTrouble() throws Exception {
         doThrow(new TroubleNotFoundException(999L))
                 .when(troubleService).update(any(), any());
@@ -289,7 +312,8 @@ class TroubleControllerTest {
                 Arguments.of(createRequest("", "설명", "로그", "[\"JWT\"]"), "제목은 필수입니다."),
                 Arguments.of(createRequest("제목", " ", "로그", "[\"JWT\"]"), "상세 설명은 필수입니다."),
                 Arguments.of(createRequest("제목", "설명", "", "[\"JWT\"]"), "원본 로그는 필수입니다."),
-                Arguments.of(createRequest("제목", "설명", "로그", "[]"), "태그는 하나 이상 입력해야 합니다.")
+                Arguments.of(createRequest("제목", "설명", "로그", "[]"), "태그는 하나 이상 입력해야 합니다."),
+                Arguments.of(createRequest("제목", "설명", "로그", "[\"  \"]"), "태그 이름은 공백일 수 없습니다.")
         );
     }
 
