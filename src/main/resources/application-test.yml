@@ -4,7 +4,7 @@ spring:
       on-profile: test
 
   datasource:
-    url: jdbc:postgresql://${TEST_DB_HOST:${DB_HOST:localhost}}:${TEST_DB_PORT:${DB_PORT:5432}}/${TEST_DB_NAME:${DB_NAME:devtroublemate}}
+    url: jdbc:postgresql://${TEST_DB_HOST:${DB_HOST:localhost}}:${TEST_DB_PORT:${DB_PORT:5432}}/${TEST_DB_NAME:devtroublemate_test}
     username: ${TEST_DB_USERNAME:${DB_USERNAME:postgres}}
     password: ${TEST_DB_PASSWORD:${DB_PASSWORD}}
     driver-class-name: org.postgresql.Driver

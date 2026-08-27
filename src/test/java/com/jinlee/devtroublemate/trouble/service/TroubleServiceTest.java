@@ -102,7 +102,7 @@ class TroubleServiceTest {
     void retryFailedAIAnalysis() {
         Trouble trouble = trouble(1L);
         trouble.failAIProcessing("OPENAI_TIMEOUT", "시간 초과");
-        when(troubleRepository.findById(1L)).thenReturn(Optional.of(trouble));
+        when(troubleRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(trouble));
         when(troubleTagRepository.findAllByTrouble(trouble)).thenReturn(List.of());
         doAnswer(invocation -> {
             trouble.startAIProcessing();
@@ -120,7 +120,7 @@ class TroubleServiceTest {
     @Test
     void retryPendingAIAnalysis() {
         Trouble trouble = trouble(1L);
-        when(troubleRepository.findById(1L)).thenReturn(Optional.of(trouble));
+        when(troubleRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(trouble));
         when(troubleTagRepository.findAllByTrouble(trouble)).thenReturn(List.of());
         doAnswer(invocation -> {
             trouble.startAIProcessing();
@@ -139,7 +139,7 @@ class TroubleServiceTest {
         Trouble trouble = trouble(1L);
         trouble.startAIProcessing();
         trouble.completeAIProcessing();
-        when(troubleRepository.findById(1L)).thenReturn(Optional.of(trouble));
+        when(troubleRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(trouble));
 
         assertThatThrownBy(() -> troubleService.retryAIAnalysis(1L))
                 .isInstanceOf(AIRetryNotAllowedException.class);
@@ -169,8 +169,33 @@ class TroubleServiceTest {
         assertThat(trouble.getDescription()).isEqualTo("수정 설명");
         assertThat(trouble.getRawLog()).isEqualTo("수정 로그");
         verify(troubleTagRepository).deleteAll(List.of(existingTag));
+        verify(tagRepository).insertIfAbsent("Spring");
         verify(tagRepository).findByName("Spring");
         verify(eventPublisher).publishEvent(new AIAnalysisRequestedEvent(1L));
+    }
+
+    @Test
+    void keepUnchangedTagRelationshipWhenUpdatingTrouble() {
+        Trouble trouble = trouble(1L);
+        Tag jwt = Tag.builder().name("JWT").build();
+        TroubleTag existingTag = TroubleTag.builder()
+                .trouble(trouble)
+                .tag(jwt)
+                .build();
+        UpdateTroubleRequest request = new UpdateTroubleRequest(
+                "수정 제목",
+                "수정 설명",
+                "수정 로그",
+                List.of("JWT")
+        );
+        when(troubleRepository.findById(1L)).thenReturn(Optional.of(trouble));
+        when(troubleTagRepository.findAllByTrouble(trouble)).thenReturn(List.of(existingTag));
+
+        troubleService.update(1L, request);
+
+        verify(troubleTagRepository).deleteAll(List.of());
+        verify(eventPublisher).publishEvent(new AIAnalysisRequestedEvent(1L));
+        org.mockito.Mockito.verifyNoInteractions(tagRepository);
     }
 
     @Test

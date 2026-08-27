@@ -11,6 +11,7 @@ import com.jinlee.devtroublemate.trouble.exception.TroubleNotFoundException;
 import com.jinlee.devtroublemate.trouble.repository.TroubleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -33,7 +34,11 @@ public class RetrospectiveService {
                 .lesson(request.lesson())
                 .build();
 
-        return RetrospectiveResponse.from(retrospectiveRepository.save(retrospective));
+        try {
+            return RetrospectiveResponse.from(retrospectiveRepository.saveAndFlush(retrospective));
+        } catch (DataIntegrityViolationException exception) {
+            throw new RetrospectiveAlreadyExistsException(troubleId);
+        }
     }
 
     @Transactional(readOnly = true)
