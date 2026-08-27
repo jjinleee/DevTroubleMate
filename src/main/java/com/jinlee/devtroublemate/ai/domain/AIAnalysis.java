@@ -16,7 +16,7 @@ public class AIAnalysis extends BaseEntity {
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "trouble_id", nullable = false)
+    @JoinColumn(name = "trouble_id", nullable = false, unique = true)
     private Trouble trouble;
 
     private String category;

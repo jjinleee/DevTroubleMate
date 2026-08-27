@@ -104,7 +104,7 @@ public class AIAnalysisService {
             noRollbackFor = AIServiceException.class
     )
     public AIAnalysisResponse analyzeStoredTrouble(Long troubleId) {
-        Trouble trouble = troubleRepository.findById(troubleId)
+        Trouble trouble = troubleRepository.findByIdForUpdate(troubleId)
                 .orElseThrow(() -> new TroubleNotFoundException(troubleId));
         java.util.List<String> tags = troubleTagRepository.findAllByTrouble(trouble).stream()
                 .map(troubleTag -> troubleTag.getTag().getName())
@@ -123,7 +123,7 @@ public class AIAnalysisService {
             Long troubleId,
             AnalyzeTroubleLogRequest request
     ) {
-        Trouble trouble = troubleRepository.findById(troubleId)
+        Trouble trouble = troubleRepository.findByIdForUpdate(troubleId)
                 .orElseThrow(() -> new TroubleNotFoundException(troubleId));
 
         return analyzeAndSave(

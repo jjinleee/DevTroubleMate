@@ -34,7 +34,7 @@ class RetrospectiveServiceTest {
         Trouble trouble = trouble(1L);
         when(troubleRepository.findById(1L)).thenReturn(Optional.of(trouble));
         when(retrospectiveRepository.existsByTroubleId(1L)).thenReturn(false);
-        when(retrospectiveRepository.save(any())).thenAnswer(invocation -> {
+        when(retrospectiveRepository.saveAndFlush(any())).thenAnswer(invocation -> {
             Retrospective saved = invocation.getArgument(0);
             ReflectionTestUtils.setField(saved, "id", 10L);
             return saved;

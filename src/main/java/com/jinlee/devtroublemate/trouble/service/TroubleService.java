@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -71,8 +72,22 @@ public class TroubleService {
         );
 
         List<TroubleTag> existingTags = troubleTagRepository.findAllByTrouble(trouble);
-        troubleTagRepository.deleteAll(existingTags);
-        saveTags(trouble, request.tags());
+        List<String> requestedTags = normalizeTags(request.tags());
+        Set<String> requestedTagSet = Set.copyOf(requestedTags);
+        Set<String> existingTagSet = existingTags.stream()
+                .map(troubleTag -> troubleTag.getTag().getName())
+                .collect(Collectors.toSet());
+
+        List<TroubleTag> removedTags = existingTags.stream()
+                .filter(troubleTag -> !requestedTagSet.contains(troubleTag.getTag().getName()))
+                .toList();
+        troubleTagRepository.deleteAll(removedTags);
+        saveTags(
+                trouble,
+                requestedTags.stream()
+                        .filter(tagName -> !existingTagSet.contains(tagName))
+                        .toList()
+        );
         trouble.resetAIProcessing();
         eventPublisher.publishEvent(new AIAnalysisRequestedEvent(trouble.getId()));
     }
@@ -165,12 +180,9 @@ public class TroubleService {
 
     private void saveTags(Trouble trouble, List<String> tagNames) {
         normalizeTags(tagNames).forEach(tagName -> {
+            tagRepository.insertIfAbsent(tagName);
             Tag tag = tagRepository.findByName(tagName)
-                    .orElseGet(() -> tagRepository.save(
-                            Tag.builder()
-                                    .name(tagName)
-                                    .build()
-                    ));
+                    .orElseThrow(() -> new IllegalStateException("태그 저장 후 조회에 실패했습니다. tagName=" + tagName));
 
             TroubleTag troubleTag = TroubleTag.builder()
                     .trouble(trouble)
@@ -189,7 +201,7 @@ public class TroubleService {
     }
 
     public AIProcessingResponse retryAIAnalysis(Long troubleId) {
-        Trouble trouble = troubleRepository.findById(troubleId)
+        Trouble trouble = troubleRepository.findByIdForUpdate(troubleId)
                 .orElseThrow(() -> new TroubleNotFoundException(troubleId));
         if (trouble.getAiProcessingStatus() != AIProcessingStatus.FAILED
                 && trouble.getAiProcessingStatus() != AIProcessingStatus.PENDING) {

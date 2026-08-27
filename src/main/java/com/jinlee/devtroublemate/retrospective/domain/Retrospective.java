@@ -18,7 +18,7 @@ public class Retrospective extends BaseEntity {
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "trouble_id", nullable = false)
+    @JoinColumn(name = "trouble_id", nullable = false, unique = true)
     private Trouble trouble;
 
     @Column(columnDefinition = "TEXT")
