@@ -1,5 +1,7 @@
 package com.jinlee.devtroublemate.ai.exception;
 
+import org.springframework.ai.retry.NonTransientAiException;
+import org.springframework.ai.retry.TransientAiException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientResponseException;
 
@@ -32,6 +34,13 @@ public final class AIExceptionTranslator {
                     return AIServiceException.authenticationFailed(cause);
                 }
             }
+            if (current instanceof TransientAiException && hasHttpStatus(current, 429)) {
+                return AIServiceException.rateLimited(cause);
+            }
+            if (current instanceof NonTransientAiException
+                    && (hasHttpStatus(current, 401) || hasHttpStatus(current, 403))) {
+                return AIServiceException.authenticationFailed(cause);
+            }
             if (current instanceof SocketTimeoutException
                     || current instanceof TimeoutException
                     || current instanceof ResourceAccessException) {
@@ -39,5 +48,10 @@ public final class AIExceptionTranslator {
             }
         }
         return null;
+    }
+
+    private static boolean hasHttpStatus(Throwable cause, int status) {
+        String message = cause.getMessage();
+        return message != null && message.contains("HTTP " + status + " ");
     }
 }
