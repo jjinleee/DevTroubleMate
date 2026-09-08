@@ -16,6 +16,8 @@ spring:
       mode: never
 
   ai:
+    retry:
+      on-http-codes: 429
     openai:
       chat:
         options:
